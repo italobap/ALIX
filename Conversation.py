@@ -8,7 +8,7 @@ from gtts import gTTS
 import playsound
 import time
 # Set your OpenAI API key
-openai.api_key = "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"
+openai.api_key = "YOUR_OPEN_AI_KEY"
 
 def get_transcription_from_whisper():
 
