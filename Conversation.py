@@ -20,7 +20,7 @@ button = Button(2)
 previous_state = 1
 current_state = 0
 
-face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # insert the full path to haarcascade file if you encounter any problem
+face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # face detection
 limit_input_time = 7
 language="pt-br"
 language_whisper="pt"
@@ -123,6 +123,19 @@ def get_transcription_from_whisper():
         stream.close()
         audio.terminate()
 
+def get_transcription_from_sr():
+    while True:
+        recognizer = sr.Recognizer()
+        with sr.Microphone() as source:
+            recognizer.adjust_for_ambient_noise(source)
+            print("Fale alguma coisa")
+            audio= recognizer.listen(source)
+        try:
+            frase = recognizer.recognize_google(audio,language = language)
+            print ("Você disse: " + frase)
+            return frase
+        except sr.UnknownValueError:
+            print("Erro no uso do SR")
 
 def speak(text):
     tts = gTTS(text= text, lang=language)
@@ -172,19 +185,6 @@ def presence_detection():
             speak("Não te encontrei, finalizando atividade.")
             break
 
-def get_transcription_from_sr():
-    while True:
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source)
-            print("Fale alguma coisa")
-            audio= recognizer.listen(source)
-        try:
-            frase = recognizer.recognize_google(audio,language = language)
-            print ("Você disse: " + frase)
-            return frase
-        except sr.UnknownValueError:
-            print("Erro no uso do SR")
 
 def generate_response2(prompt):
     body_mensagem={
@@ -197,65 +197,64 @@ def generate_response2(prompt):
     mensagem = resposta["choices"][0]["message"]["content"]
     return mensagem
 
+def conversation_mode():
+    while True:
+        if button.is_pressed:
+            if previous_state != current_state:
+                current_state = 1
+                frase = get_transcription_from_whisper()
+                if "parar" in frase:
+                    speak("Certo, finalizando modo conversa.")
+                    break
+                else:
+                    conversation =generate_response2(frase)
+                    speak(conversation)
+                    current_state = 0
+
 if __name__ == '__main__':
     while True:
-       if button.is_pressed:
-          if previous_state != current_state:
-             current_state = 1
-             frase = get_transcription_from_whisper()
-             if frase is not None:
-                 if "estudar" in frase:
-                    speak("Certo. Vamos aprender inglês.")
-                    current_state = 0
-                    sleep(0.50)
-                    speak("Qual atividade você irá fazer?")
-                    while True:
-                        if button.is_pressed:
-                            if previous_state != current_state:
-                                current_state = 1
-                                frase = get_transcription_from_whisper()
-                                current_time = time.time()
-                                if frase is not None:
-                                    if "exercício" in frase:
-                                        speak("Iniciando exercício numero um de comidas")
-                                        current_state = 0
-                                        speak("Como é maçã em inglês?")
-                                        while True:
-                                            if button.is_pressed:
-                                                if previous_state != current_state:
-                                                    current_state = 1
-                                                    frase = get_transcription_from_whisper()
-                                                    current_time = time.time()
-                                                    if "Apple" in frase:
-                                                        speake("That is correct.")
-                                                        current_state = 0
-                                                        sleep(0.50)
-                                                        speak("Atividade finalizada.Parabéns!")
-                                                        break
-                                                    else:
-                                                        speake("That is incorrect. Try again")
-                                                        current_state = 0
-                                    if "parar" in frase:
-                                        speak("Certo, finalizando modo de estudo.")
-                                        break
-                 if "Tchau" in frase:
-                    speak("Até mais, mal posso esperar para conversar com você de novo.")
-                    break 
-                 if "pergunta" in frase:
-                    speak("Legal. O que você gostaria de perguntar?")
-                    current_state = 0
-                    while True:
-                        if button.is_pressed:
-                            if previous_state != current_state:
-                                current_state = 1
-                                frase = get_transcription_from_whisper()
-                                current_time = time.time()
-                                if "parar" in frase:
-                                    speak("Certo, finalizando modo conversa.")
-                                    break
-                                else:
-                                    conversation =generate_response2(frase)
-                                    #print("--- %s seconds ---" % (time.time()-current_time))
-                                    speak(conversation)
-                                    current_state = 0
-             current_state = 0
+        if button.is_pressed:
+            if previous_state != current_state:
+                current_state = 1
+                frase = get_transcription_from_whisper()
+                if frase is not None:
+                    if "estudar" in frase:
+                        speak("Certo. Vamos aprender inglês.")
+                        current_state = 0
+                        sleep(0.50)
+                        speak("Qual atividade você irá fazer?")
+                        while True:
+                            if button.is_pressed:
+                                if previous_state != current_state:
+                                    current_state = 1
+                                    frase = get_transcription_from_whisper()
+                                    if frase is not None:
+                                        if "exercício" in frase:
+                                            speak("Iniciando exercício numero um de comidas")
+                                            current_state = 0
+                                            speak("Como é maçã em inglês?")
+                                            while True:
+                                                if button.is_pressed:
+                                                    if previous_state != current_state:
+                                                        current_state = 1
+                                                        frase = get_transcription_from_whisper()
+                                                        if "Apple" in frase:
+                                                            speake("That is correct.")
+                                                            current_state = 0
+                                                            sleep(0.50)
+                                                            speak("Atividade finalizada.Parabéns!")
+                                                            break
+                                                        else:
+                                                            speake("That is incorrect. Try again")
+                                                            current_state = 0
+                                        if "parar" in frase:
+                                            speak("Certo, finalizando modo de estudo.")
+                                            break
+                    if "Tchau" in frase:
+                        speak("Até mais, mal posso esperar para conversar com você de novo.")
+                        break 
+                    if "pergunta" in frase:
+                        speak("Legal. O que você gostaria de perguntar?")
+                        current_state = 0
+                        conversation_mode()
+                current_state = 0
