@@ -18,6 +18,7 @@ from gpiozero import Button
 from time import sleep
 button = Button(2)
 previous_state = 1
+global current_state
 current_state = 0
 
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # face detection
@@ -198,6 +199,7 @@ def generate_response2(prompt):
     return mensagem
 
 def conversation_mode():
+    global current_state
     while True:
         if button.is_pressed:
             if previous_state != current_state:
@@ -211,6 +213,36 @@ def conversation_mode():
                     speak(conversation)
                     current_state = 0
 
+def learning_mode():
+    global current_state
+    while True:
+        if button.is_pressed:
+            if previous_state != current_state:
+                current_state = 1
+                frase = get_transcription_from_whisper()
+                if frase is not None:
+                    if "exercício" in frase:
+                        speak("Iniciando exercício numero um de comidas")
+                        current_state = 0
+                        speak("Como é maçã em inglês?")
+                        while True:
+                            if button.is_pressed:
+                                if previous_state != current_state:
+                                    current_state = 1
+                                    frase = get_transcription_from_whisper()
+                                    if "Apple" in frase:
+                                        speake("That is correct.")
+                                        current_state = 0
+                                        sleep(0.50)
+                                        speak("Atividade finalizada.Parabéns!")
+                                        break
+                                    else:
+                                        speake("That is incorrect. Try again")
+                                        current_state = 0
+                    if "parar" in frase:
+                        speak("Certo, finalizando modo de estudo.")
+                        break
+    
 if __name__ == '__main__':
     while True:
         if button.is_pressed:
@@ -223,33 +255,7 @@ if __name__ == '__main__':
                         current_state = 0
                         sleep(0.50)
                         speak("Qual atividade você irá fazer?")
-                        while True:
-                            if button.is_pressed:
-                                if previous_state != current_state:
-                                    current_state = 1
-                                    frase = get_transcription_from_whisper()
-                                    if frase is not None:
-                                        if "exercício" in frase:
-                                            speak("Iniciando exercício numero um de comidas")
-                                            current_state = 0
-                                            speak("Como é maçã em inglês?")
-                                            while True:
-                                                if button.is_pressed:
-                                                    if previous_state != current_state:
-                                                        current_state = 1
-                                                        frase = get_transcription_from_whisper()
-                                                        if "Apple" in frase:
-                                                            speake("That is correct.")
-                                                            current_state = 0
-                                                            sleep(0.50)
-                                                            speak("Atividade finalizada.Parabéns!")
-                                                            break
-                                                        else:
-                                                            speake("That is incorrect. Try again")
-                                                            current_state = 0
-                                        if "parar" in frase:
-                                            speak("Certo, finalizando modo de estudo.")
-                                            break
+                        learning_mode()
                     if "Tchau" in frase:
                         speak("Até mais, mal posso esperar para conversar com você de novo.")
                         break 
