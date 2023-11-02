@@ -19,7 +19,6 @@ anguloCabeca = 90
 
 velocidade = 0.01
 
-
 kit.servo[bracoEsquerdo].angle = anguloBracoEsquerdo
 kit.servo[ombroEsquerdo].angle = anguloOmbroEsquerdo
 

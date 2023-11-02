@@ -14,6 +14,7 @@ cabeca = 4
 
 repeticoes = 2
 velocidade = 0.01
+variacao = 2
 
 for i in range (140, 150):
     kit.servo[bracoEsquerdo].angle = i
@@ -49,15 +50,15 @@ if __name__ == "__main__":
 
     #braco Esquerdo
     for i in range(2):
-        t = threading.Thread(target=moveMotor, args=(i, 150, 30, velocidade))  # Crie uma thread para cada servo
+        t = threading.Thread(target=moveMotor, args=(i, 150, variacao, velocidade))  # Crie uma thread para cada servo
         threads.append(t)  # Adicione a thread a lista
         
     #braco Direito
     for i in range(2,4):
-        t = threading.Thread(target=moveMotor, args=(i, 31, 30, velocidade))  # Crie uma thread para cada servo
+        t = threading.Thread(target=moveMotor, args=(i, 31, variacao, velocidade))  # Crie uma thread para cada servo
         threads.append(t)  # Adicione a thread a lista
     
-    t1 = threading.Thread(target=moveMotor, args=(4, 90, 30, velocidade))  # Crie uma thread para cada servo
+    t1 = threading.Thread(target=moveMotor, args=(4, 90, variacao, velocidade))  # Crie uma thread para cada servo
     threads.append(t1)  # Adicione a thread a lista
         
     for t in threads:
