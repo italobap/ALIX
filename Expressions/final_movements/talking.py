@@ -20,8 +20,7 @@ anguloBracoDireito = 30
 anguloOmbroDireito = 30
 anguloCabeca = 90
 
-# variacao = 30
-variacao = 10
+variacao = 30
 velocidade = 0.02
 repeticoes = 2
 

@@ -19,19 +19,12 @@ velocidade = 0.01
 anguloBracoEsquerdoStandby = 155
 anguloBracoDireitoStandby = 30
 
-# sad limitado
-anguloBracoEsquerdo = 160
+# sad original
+anguloBracoEsquerdo = 180
 anguloOmbroEsquerdo = 180
 
-anguloBracoDireito = 20
+anguloBracoDireito = 0
 anguloOmbroDireito = 30
-
-# sad original
-# anguloBracoEsquerdo = 180
-# anguloOmbroEsquerdo = 180
-
-# anguloBracoDireito = 0
-# anguloOmbroDireito = 30
 
 kit.servo[ombroEsquerdo].angle = anguloOmbroEsquerdo
 kit.servo[ombroDireito].angle = anguloOmbroDireito

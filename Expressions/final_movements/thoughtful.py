@@ -18,17 +18,11 @@ anguloOmbroEsquerdoStandby = 180
 anguloBracoDireito = 30
 anguloOmbroDireito = 30
 
-# Pensando Limitado
-anguloBracoEsquerdo = 160
-anguloOmbroEsquerdo = 170
+# Pensando Original
+anguloBracoEsquerdo = 180
+anguloOmbroEsquerdo = 100
 anguloBracoDireito = 30
 anguloOmbroDireito = 30
-
-# Pensando Original
-# anguloBracoEsquerdo = 180
-# anguloOmbroEsquerdo = 100
-# anguloBracoDireito = 30
-# anguloOmbroDireito = 30
 
 anguloCabeca = 90
 velocidade = 0.01

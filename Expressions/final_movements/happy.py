@@ -18,8 +18,7 @@ anguloBracoDireito = 30
 anguloOmbroDireito = 30
 anguloCabeca = 110
 
-variacao = 10
-# variacao = 150
+variacao = 150
 velocidade = 0.005
 
 

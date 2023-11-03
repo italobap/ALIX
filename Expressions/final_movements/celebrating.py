@@ -14,7 +14,7 @@ cabeca = 4
 
 repeticoes = 2
 velocidade = 0.01
-variacao = 2
+variacao = 30
 
 for i in range (140, 150):
     kit.servo[bracoEsquerdo].angle = i
