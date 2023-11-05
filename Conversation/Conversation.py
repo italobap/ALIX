@@ -2,21 +2,20 @@ import os
 import numpy as np
 import pyaudio
 import openai
-import wave
 from pydub import AudioSegment
 from gtts import gTTS
 import playsound
 import time
+from time import sleep
 import cv2
-#from neuralintents import GenericAssistant
 from senha import API_KEY
 import speech_recognition as sr
 import requests
 import json
+import subprocess
 #import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 
 from gpiozero import Button
-from time import sleep
 button = Button(10)
 previous_state = 1
 global current_state
@@ -29,16 +28,6 @@ language_whisper="pt"
 # Set your OpenAI API key
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 link = "https://api.openai.com/v1/chat/completions"
-import signal
-import subprocess
-
-
-#assistant = GenericAssistant("intents.json")
-#assistant.train_model()
-
-#GPIO.setwarnings(False) # Ignore warning for now
-#GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
-#GPIO.setup(19, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 
 def get_transcription_from_whisper():
@@ -122,7 +111,7 @@ def get_transcription_from_whisper():
             # Check if it has been more than 10 seconds without speech
             if current_time - detection_time >= limit_input_time:
                 print("No speech detected within the last 10 seconds. Stopping recording.")
-                presence_detection()
+                speak("Não escutei o que você falou. Aperte o botão de novo para falar comigo.")
                 break
 
     except Exception as e:
@@ -194,7 +183,6 @@ def presence_detection():
             cv2.destroyAllWindows()
             speak("Não te encontrei, finalizando atividade.")
             break
-
 
 def generate_response2(prompt):
     body_mensagem={
