@@ -4,16 +4,17 @@ import time
 
 kit = ServoKit(channels=16)
 
-base = 5
+base = 7
 startBaseAngle = 90
 
-velocidade = 0.01
+velocidade = 0.05
 variacao = 60
 
 def moveMotor(servo, startAngle, variacaoAngle, delay):
         # Exemplo: comeca em startAngle(150) vai movimentar ate 180 (startAngle + variacaoAngle (30))
         endAngle = startAngle + variacaoAngle
         for i in range (startAngle, endAngle):
+            kit.servo[servo].angle = i
             time.sleep(delay)
 
         # Exemplo: comeca em 180, final do movimento anterior, e vai ate 120

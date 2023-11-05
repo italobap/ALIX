@@ -13,13 +13,7 @@ import speech_recognition as sr
 import requests
 import json
 import subprocess
-#import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
-
-from gpiozero import Button
-button = Button(10)
-previous_state = 1
-global current_state
-current_state = 0
+import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # face detection
 limit_input_time = 7
@@ -29,7 +23,10 @@ language_whisper="pt"
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 link = "https://api.openai.com/v1/chat/completions"
 
-
+solenoid_pin = 15
+push_button_pin = 19 #gpio10
+magnetic_sensor_pin = 32 #gpio12
+    
 def get_transcription_from_whisper():
     # Set the audio parameters
     FORMAT = pyaudio.paInt16
@@ -99,13 +96,13 @@ def get_transcription_from_whisper():
                     transcript = openai.Audio.transcribe("whisper-1", f)
 
                 transcription = transcript['text']
-                print("Transcript:", transcription)
+                print("Transcript:", transcription.lower())
 
                 if "Thanks for watching" in transcription or "You" in transcription:
                     print("Error in transcription, retrying...")
                     return get_transcription_from_whisper()
 
-                return transcription
+                return transcription.lower()
                 break
 
             # Check if it has been more than 10 seconds without speech
@@ -196,85 +193,97 @@ def generate_response2(prompt):
     return mensagem
 
 def conversation_mode():
-    global current_state
     while True:
-        if button.is_pressed:
-            if previous_state != current_state:
-                current_state = 1
-                frase = get_transcription_from_whisper()
-                if "parar" in frase:
-                    speak("Certo, finalizando modo conversa.")
-                    break
-                else:
-                    #p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/sad',shell=True, preexec_fn=os.setsid)
-                    conversation =generate_response2(frase)
-                    speak(conversation)
-                    #p.kill()
-                    current_state = 0
-                    #p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/thoughtful',shell=True, preexec_fn=os.setsid)
-
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            frase = get_transcription_from_whisper()
+            if "parar" in frase:
+                p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/standby.py',shell=True, preexec_fn=os.setsid)
+                speak("Certo, finalizando modo conversa.")
+                sleep(1)
+                p.kill()
+                break
+            else:
+                conversation =generate_response2(frase)
+                p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/thoughtful',shell=True, preexec_fn=os.setsid)
+                subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/thoughtful.py',shell=True, preexec_fn=os.setsid)
+                speak(conversation)
+                p.kill()
+                
 def learning_mode():
-    global current_state
     while True:
-        if button.is_pressed:
-            if previous_state != current_state:
-                current_state = 1
-                frase = get_transcription_from_whisper()
-                if frase is not None:
-                    if "exercício" in frase:
-                        speak("Iniciando exercício numero um de comidas")
-                        current_state = 0
-                        speak("Como é maçã em inglês?")
-                        while True:
-                            if button.is_pressed:
-                                if previous_state != current_state:
-                                    current_state = 1
-                                    frase = get_transcription_from_whisper()
-                                    if "Apple" in frase:
-                                        speake("That is correct.")
-                                        #p.kill()
-                                        #p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/happy',shell=True, preexec_fn=os.setsid)
-                                        current_state = 0
-                                        sleep(0.50)
-                                        speak("Atividade finalizada.Parabéns!")
-                                        #p.kill()
-                                        #p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/celebrating',shell=True, preexec_fn=os.setsid)
-                                        break
-                                    else:
-                                        #p.kill()
-                                        speake("That is incorrect. Try again")
-                                        #p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/sad',shell=True, preexec_fn=os.setsid)
-                                        current_state = 0
-                    if "parar" in frase:
-                        speak("Certo, finalizando modo de estudo.")
-                        break
-    
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            frase = get_transcription_from_whisper()
+            if frase is not None:
+                if "exercício" in frase:
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/thoughtful',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/asking.py',shell=True, preexec_fn=os.setsid)
+                    speak("Iniciando exercício numero um de comidas")
+                    sleep(1)
+                    speak("Como é maçã em inglês?")
+                    p.kill()
+                    while True:
+                        if GPIO.input(push_button_pin) == GPIO.LOW:
+                            frase = get_transcription_from_whisper()
+                            if "apple" in frase:
+                                #p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/celebrating',shell=True, preexec_fn=os.setsid)
+                                #subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/celebrating.py',shell=True, preexec_fn=os.setsid)
+                                speake("That is correct.")
+                                current_state = 0
+                                sleep(1)
+                                speak("Atividade finalizada.Parabéns!")
+                                #p.kill()
+                                break
+                            else:
+                                p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/sad',shell=True, preexec_fn=os.setsid)
+                                subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/sad.py',shell=True, preexec_fn=os.setsid)
+                                speake("That is incorrect. Try again")
+                                print(frase)
+                                p.kill()
+                if "parar" in frase:
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/standby.py',shell=True, preexec_fn=os.setsid)             
+                    speak("Certo, finalizando modo de estudo.")
+                    sleep(1)
+                    p.kill
+                    break
+
+def GPIO_Init():
+    GPIO.setwarnings(False) # Ignore warning for now
+    GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
+    GPIO.setup(solenoid_pin, GPIO.OUT) 
+    GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+    GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+
 if __name__ == '__main__':
-    p = subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/standby',shell=True, preexec_fn=os.setsid)
-    #subprocesses.append(p)
+    GPIO_Init()
+    p = subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/standby',shell=True, preexec_fn=os.setsid)
     while True:
-        if button.is_pressed:
-            if previous_state != current_state:
-                p.kill()
-                p=subprocess.Popen('exec /home/alix/Documents/ALIX/DisplayLib/happy',shell=True, preexec_fn=os.setsid)
-                current_state = 1
-                frase = get_transcription_from_whisper()
-                if frase is not None:
-                    if "estudar" in frase:
-                        speak("Certo. Vamos aprender inglês.")
-                        current_state = 0
-                        sleep(0.50)
-                        speak("Qual atividade você irá fazer?")
-                        learning_mode()
-                    if "Tchau" in frase:
-                        speak("Até mais, mal posso esperar para conversar com você de novo.")
-                        break 
-                    if "pergunta" in frase:
-                        subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-                        speak("Legal. O que você gostaria de perguntar?")
-                        #p=subprocess.Popen('python /home/alix/Documents/ALIX/Motores/codigosFromRasp/talking.py',shell=True, preexec_fn=os.setsid)
-                        current_state = 0
-                        sleep(0.5)
-                        conversation_mode()
-                current_state = 0
-                p.kill()
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            p.kill()
+            frase = get_transcription_from_whisper()
+            if frase is not None:
+                if "estudar" in frase:
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
+                    speak("Certo. Vamos aprender inglês.")
+                    current_state = 0
+                    sleep(0.50)
+                    speak("Qual atividade você irá fazer?")
+                    p.kill()
+                    learning_mode()
+                if "tchau" in frase:
+                    speak("Até mais, mal posso esperar para conversar com você de novo.")
+                    break 
+                if "pergunta" in frase:
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
+                    speak("Legal. O que você gostaria de perguntar?")
+                    #p=subprocess.Popen('python /home/alix/Documents/ALIX/Motores/codigosFromRasp/talking.py',shell=True, preexec_fn=os.setsid)
+                    current_state = 0
+                    sleep(0.5)
+                    p.kill()
+                    conversation_mode()
+            p.kill()

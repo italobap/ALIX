@@ -13,7 +13,6 @@ import speech_recognition as sr
 import requests
 import json
 import keyboard
-from gpiozero import Button
 push_button = Button(10)
 magnetic_sensor = Button(12)
 solenoid_pin = 15
@@ -182,7 +181,6 @@ def learning_mode():
                     if "colors" and "1" in frase:
                         speak(getQuestion("Colors",1))
                         speak_time = time.time()
-                        pomodoro_time = time.time()
                         total_time = time.time()
                         sleep(0.50)
                         while True:
@@ -215,10 +213,16 @@ def learning_mode():
                         break
 
 def GPIO_Init():
+    solenoid_pin = 15
+    push_button_pin = 19 #gpio10
+    magnetic_sensor_pin = 32 #gpio12
+    limit_time = 5
     GPIO.setwarnings(False) # Ignore warning for now
     GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
-    GPIO.setup(solenoid_pin, GPIO.OUT) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
-
+    GPIO.setup(solenoid_pin, GPIO.OUT) 
+    GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+    GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+    
 def lockable_compartment():
     GPIO.output(solenoid_pin, True)
     while True:
@@ -233,6 +237,7 @@ def lockable_compartment():
             break
 
 if __name__ == '__main__':
+    GPIO_Init()
     while True:
         if keyboard.read_key() == "r":
             frase = get_transcription_from_whisper()
@@ -268,6 +273,6 @@ if __name__ == '__main__':
                     speak("Qual atividade você vai realizar?")
                     learning_mode()            
 
-                if "Tchau" in frase:
+                if "bye" in frase:
                     speak("Até mais, mal posso esperar para conversar com você de novo.")
                     break

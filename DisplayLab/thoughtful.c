@@ -45,7 +45,7 @@ time_t PNGTest(TFT_t * dev, char * file, int width, int height) {
 	//lcdFillScreen(dev, BLACK);
 
 	int _width = width;
-	if (width > 240) _width = 240;
+	if (width > 320) _width = 320;
 	int _height = height;
 	if (height > 320) _height = 320;
 
@@ -160,13 +160,16 @@ int main(int argc, char **argv){
 	lcdInversionOn(&dev);
 #endif
 
-	int f;
+	int h,f;
 	char file[200];
-	while(true){
+	for(h=0; h<4;h++){
 		for(f=0; f<20;f++){			
-			snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/DisplayLib/images/angry/frame%d.png", f);
+			snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/angry/frame%d.png", f);
 			PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
 			sleep(0.01);
 		}
 	}
+	snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/angry/frame0.png", f);
+	PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
+	sleep(0.01);
 }

@@ -160,13 +160,16 @@ int main(int argc, char **argv){
 	lcdInversionOn(&dev);
 #endif
 
-	int f;
+	int f,h;
 	char file[200];
-	while(true){
+    for(h=0; h<2;h++){
 		for(f=0; f<47;f++){			
-			snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/DisplayLib/images/sad/frame%d.png", f);
+			snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/sad/frame%d.png", f);
 			PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
 			sleep(0.01);
 		}
 	}
+	snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/sad/frame46.png");
+	PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
+	sleep(0.01);
 }
