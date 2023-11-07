@@ -29,7 +29,7 @@ def getAudio(lesson):
     return content[i][begin:end]
 
 #print(getAudio("Colors"))
-
-#print( getLesson(2))
-print(getQuestion("Colors",1))
-print(getAnswer("Colors",1))
+for i in range(10):
+    print( getLesson(i))
+#print(getQuestion("Colors",1))
+#print(getAnswer("Colors",1))

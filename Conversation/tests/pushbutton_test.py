@@ -13,25 +13,23 @@ GPIO.setup(solenoid_pin, GPIO.OUT) # Set pin 10 to be an input pin and set initi
 GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
 GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
 
-
-while True:
-    if GPIO.input(push_button_pin) == GPIO.LOW:
-        print("Button is pressed")
-        GPIO.output(solenoid_pin, 1)
-        while (GPIO.input(magnetic_sensor_pin) == GPIO.LOW):
-            print(GPIO.input(magnetic_sensor_pin))
+def lockable_compartment():
+    while True:
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            print("Button is pressed")
             GPIO.output(solenoid_pin, 1)
-        
-        sleep(1)
-        GPIO.output(solenoid_pin, 0)
-        current_time = time.time()
-        break
+            while (GPIO.input(magnetic_sensor_pin) == GPIO.LOW):
+                print(GPIO.input(magnetic_sensor_pin))
+                GPIO.output(solenoid_pin, 1)
+            
+            sleep(1)
+            GPIO.output(solenoid_pin, 0)
+            break
 
-while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
-    print("Trava aberta")
+    while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
+        print("Trava aberta")
+
+    speak("Compartimento de recompensas ativado.")
     
     
-sleep(5)    
-print("Trava fechada")
-
         
