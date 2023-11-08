@@ -45,7 +45,7 @@ time_t PNGTest(TFT_t * dev, char * file, int width, int height) {
 	//lcdFillScreen(dev, BLACK);
 
 	int _width = width;
-	if (width > 240) _width = 240;
+	if (width > 320) _width = 320;
 	int _height = height;
 	if (height > 320) _height = 320;
 

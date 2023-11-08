@@ -12,7 +12,7 @@ from senha import API_KEY
 import speech_recognition as sr
 import requests
 import json
-import keyboard
+#import keyboard
 import pygame 
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 import subprocess
@@ -28,22 +28,23 @@ solenoid_pin = 15
 push_button_pin = 19 #gpio10
 magnetic_sensor_pin = 32 #gpio12
 
-#music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
-music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
+music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
+#music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
 
 language="pt-br"
-language_whisper="en"
+#language_whisper_pt="pt"
+#language_whisper_en="en"
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
 
-def get_transcription_from_whisper():
+def get_transcription_from_whisper(language_whisper):
     # Set the audio parameters
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
     CHUNK = 4096
     SILENCE_THRESHOLD = 1000  # Silence threshold
-    dev_index = 0  # Device index found by p.get_device_info_by_index(ii) --------trocar para 0----------
+    dev_index = 1  # Device index found by p.get_device_info_by_index(ii) --------trocar para 0----------
     SPEECH_END_TIME = 1.0  # Time of silence to mark the end of speech
 
     # Initialize PyAudio
@@ -121,6 +122,8 @@ def get_transcription_from_whisper():
         stream.stop_stream()
         stream.close()
         audio.terminate()
+    
+
 
 def speak(text):
     tts = gTTS(text= text, lang=language)
@@ -152,7 +155,7 @@ def presence_detection():
             # Release the camera and close the OpenCV window
             cam.release()
             cv2.destroyAllWindows()
-            speak("Você ainda está aí. Você pode me responder apertando o botão.")
+            speak("Encontrei você. Que bom, continue estudando.")
             break
 
         # Check if the face detection time has exceeded the limit
@@ -182,35 +185,45 @@ def getAnswer(lesson, i):
     return content[i][begin:end]
 
 def learning_mode():
-    speak("Qual tarefa você gostaria de fazer? Temos tarefas de leitura, de escuta e atividades para fixar o conhecimento.")
+    speak("Qual tarefa você gostaria de fazer? Temos tarefas de leitura, de escuta e avaliação para fixar o conhecimento.")
     while True:
-        if keyboard.read_key() == "r":
-                frase = get_transcription_from_whisper()
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+                frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "leitura" in frase:
                         reading_mode()
                     if "escuta" in frase:
                         listening_mode()
-                    if "atividades" in frase:
+                    if "avaliação" in frase:
                         assessment_mode()
                     if "parar" in frase:
                         speak("Certo, finalizando modo de estudo.")
                         break
 
 def reading_mode():
-    break_count = 0 
+    break_count = 0
+    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/thoughtful',shell=True, preexec_fn=os.setsid)
+    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/thoughtful.py',shell=True, preexec_fn=os.setsid)
     speak("Qual capítulo você irá ler?")
+    p.kill()
     while True:
-        if keyboard.read_key() == "r":
+        if GPIO.input(push_button_pin) == GPIO.LOW:
             frase = get_transcription_from_whisper()
             if frase is not None:
-                if "capítulo" in frase or "capitulo" in frase:
+                if "capítulo" in frase or "capitulo" in frase or "sentimentos" in frase:
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                     speak("Legal. Quando terminar a leitura, lembre de me avisar.")
                     a_time = time.time()
                     spomodoro_time = time.time()
                     total_time = time.time()
+                    p.kill()
                     break
                 if "parar" in frase:
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                     speak("Certo, finalizando modo de estudo da leitura.")
                     total_time = (time.time() - total_time) / 60  # Calculate total reading time in minutes
                     print("Tempo total = " + str(total_time))
@@ -228,62 +241,80 @@ def reading_mode():
             if(break_count < 4):
                 print(time.time() - spomodoro_time)
                 print(short_pomodoro)
+                p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+                subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
                 speak("Está na hora da sua pausa de 5 minutos.")
                 sleep(5)
                 speak("Pausa finalizada. Está na hora de voltar")
                 spomodoro_time = time.time() 
                 break_count += 1
+                p.kill()
             else:
+                p.kill()
+                p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                 speak("Está na hora da sua pausa de 15 minutos.")
                 sleep(10)
                 speak("Pausa finalizada. Está na hora de voltar")
-                spomodoro_time = time.time() 
+                spomodoro_time = time.time()
+                p.kill()
                 break_count = 0  # Reset the break count after a long break
 
 #adjectives primeira pergunta tá errada
 def assessment_mode():
-    speak("Qual capitulo você irar fazer atividades?")
+    speak("Qual capítulo você irar fazer atividades?")
     while True:
-        if keyboard.read_key() == "r":
-                frase = get_transcription_from_whisper()
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+                frase = get_transcription_from_whisper("pt")
                 if frase is not None:
-                    for j in range(10):
-                        chapter = getLesson(j).lower()
-                        if chapter in frase:
-                            speak("Vamos fazer as atividades de" + chapter)
-                            break
+                    if "sentimentos" in frase:
+                        chapter = "Feelings"
+                    #for j in range(10):
+                    #    chapter = "Feelings"
+                    #    if chapter in frase:
+                        speak("Vamos fazer as atividades de sentimentos")
+                    #        break
                     error_count = 0 
                     for i in range(6):
                         speak(getQuestion(chapter,i))
                         skip_question = False
                         while True:
-                            if keyboard.read_key() == "r":
-                                frase = get_transcription_from_whisper()
+                            if GPIO.input(push_button_pin) == GPIO.LOW:
+                                frase = get_transcription_from_whisper("en")
                                 if frase is not None:
                                     if getAnswer(chapter, i).lower() in frase:
                                         if(i<5):
+                                            p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                                            subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                                             speak("Acertou, vamos para a próxima pergunta")
+                                            p.kill()
                                             error_count = 0 
                                             break
                                         else:
+                                            p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                                            subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                                             speak("Você finalizou a atividade. Parabéns")
+                                            p.kill()
                                             lockable_compartment()
                                             break
                                     else:
+                                        p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/sad',shell=True, preexec_fn=os.setsid)
+                                        subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/sad.py',shell=True, preexec_fn=os.setsid)
                                         speak("Está errado tente outra vez")
                                         error_count += 1
+                                        p.kill()
                                         if error_count >=3:
                                             speak("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                             while True:
-                                                if keyboard.read_key() == "r":
-                                                    frase = get_transcription_from_whisper()
+                                                if GPIO.input(push_button_pin) == GPIO.LOW:
+                                                    frase = get_transcription_from_whisper("pt")
                                                     if frase is not None:
-                                                        if "yes" in frase:
+                                                        if "sim" in frase:
                                                             speak("Tudo bem, vamos para a próxima pergunta")
                                                             error_count = 0
                                                             skip_question = True
                                                             break
-                                                        if "no" in frase:
+                                                        if "não" in frase:
                                                             speak(getQuestion(chapter,i))
                                                             break
                             if skip_question:
@@ -295,9 +326,12 @@ def assessment_mode():
                         break
 
 def listening_mode():
-    speak("Qual capitulo você quer praticar o listen?") #ver com o vinicius
+    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
+    speak("Qual capítulo você quer praticar a escuta?") #ver com o vinicius
+    p.kill()
     while True:
-        if keyboard.read_key() == "r":
+        if GPIO.input(push_button_pin) == GPIO.LOW:
                 frase = get_transcription_from_whisper()
                 if frase is not None:
                     if "adjetivos" in frase:
@@ -309,7 +343,15 @@ def listening_mode():
                     if "cores" in frase:
                         play_music("colors")
                     if "sentimentos" in frase:
+                        p.kill()
+                        p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/celebrating',shell=True, preexec_fn=os.setsid)
+                        speak("Muito bem. Escute com atenção e divirta-se.")
                         play_music("feelings")
+                        p.kill()
+                        p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                        subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
+                        speak("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
+                        p.kill()
                     if "comidas" in frase:
                         play_music("food")
                     if "cumprimentos" in frase:
@@ -341,20 +383,20 @@ def lockable_compartment():
                 print(GPIO.input(magnetic_sensor_pin))
                 GPIO.output(solenoid_pin, 1)
             
-            sleep(1)
+            sleep(2)
             GPIO.output(solenoid_pin, 0)
             break
 
     while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
-        continue
+        print("Trava aberta")
 
     speak("Compartimento de segurança fechado com sucesso")
 
 def GPIO_Init():
     GPIO.setwarnings(False) # Ignore warning for now
     GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
-    GPIO.setup(solenoid_pin, GPIO.OUT) 
-    GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+    GPIO.setup(solenoid_pin, GPIO.OUT) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
+    GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
     GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 
@@ -362,42 +404,74 @@ if __name__ == '__main__':
     pygame.init()
     pygame.mixer.init()
     GPIO_Init()
+    p = subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/standby',shell=True, preexec_fn=os.setsid)
     while True:
-        if keyboard.read_key() == "r":
-            frase = get_transcription_from_whisper()
+        if GPIO.input(push_button_pin) == GPIO.LOW:
+            frase = get_transcription_from_whisper("pt")
             if frase is not None:
-                if "study" in frase:
+                if "estudar" in frase:
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
                     '''speak("Certo. Precisamos realizar umas configurações antes de iniciar as atividades.")
                     sleep(0.50)
                     speak("Você vai utilizar o compartimento de recompensas?")
+                    p.kill()
                     while True:
-                        if keyboard.read_key() == "r":
+                        if GPIO.input(push_button_pin) == GPIO.LOW:
                             frase = get_transcription_from_whisper()
                             if frase is not None:
                                 if "sim" in frase:
-                                    speak("Certo. Pode abrir a porta para utilizar o compartimento de recompensas")
-                                    #lockable_compartment()
+                                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+                                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
+                                    speak("Certo. Aperte o botão para destravar o compartimento e abra a porta")
+                                    p.kill()
+                                    while True:
+                                        if GPIO.input(push_button_pin) == GPIO.LOW:
+                                            print("Button is pressed")
+                                            GPIO.output(solenoid_pin, 1)
+                                            while (GPIO.input(magnetic_sensor_pin) == GPIO.LOW):
+                                                print(GPIO.input(magnetic_sensor_pin))
+                                                GPIO.output(solenoid_pin, 1)
+                                            
+                                            sleep(1)
+                                            GPIO.output(solenoid_pin, 0)
+                                            break
+
+                                    while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
+                                        print("Trava aberta")
+
+                                    speak("Compartimento de recompensas ativado.")
                                     break
                                 if "não" in frase:
                                     speak("Ok. Compartimento de recompensas desativado.")
                                     break
 
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
                     speak("Você gostaria de usar a camera para detecção de presença durante as atividades?")
+                    p.kill()
                     while True:
-                        if keyboard.read_key() == "r":
+                        if GPIO.input(push_button_pin) == GPIO.LOW:
                             frase = get_transcription_from_whisper()
                             if frase is not None:
                                 if "sim" in frase:
                                     #presence_detection()
                                     speak("Ok, detecção de presença ativado.")
                                     break
-                                else:
+                                if "não" in frase:
                                     speak("Tudo bem, não irei utilizar a detecção de presença durante a atividade.")
-                                    break'''
-
+                                    break
+                                else:
+                                    speak("Não é uma opção, diga sim ou não")
+                    p.kill()
+                    p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
+                    subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)'''
                     speak("Vamos aprender inglês.")
-                    #learning_mode() 
-                    assessment_mode()
+                    p.kill()
+                    learning_mode() 
+                    #assessment_mode()
 
                 if "tchau" in frase:
                     speak("Até mais, mal posso esperar para conversar com você de novo.")
