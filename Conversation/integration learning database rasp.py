@@ -403,7 +403,7 @@ def GPIO_Init():
 if __name__ == '__main__':
     pygame.init()
     pygame.mixer.init()
-    GPIO_Init()
+    #GPIO_Init()
     p = subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/standby',shell=True, preexec_fn=os.setsid)
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:

@@ -28,13 +28,13 @@ for lesson in query:
         f.write(f"{lesson.get('name')},{lesson.get('ListeningSection').get('audio')}")
         f.write('\n')
     
-    f=open(f"Questionnaires/{lesson.get('name')}" ,'w')
+    f=open(f"Questionnaires/{lesson.get('name')}" ,'w', encoding='Windows-1252')
     
     
     questionnaire=lesson.get("AssesmentSection").get("Questionnaire")
     for question in questionnaire:
         print(f"{question.get('question')},{question.get('expectedAnswer')}")
-        with open(f"Questionnaires/{lesson.get('name')}" ,'a') as f:
+        with open(f"Questionnaires/{lesson.get('name')}" ,'a', encoding='Windows-1252') as f:
             f.write(f"{question.get('question')},{question.get('expectedAnswer')}")
             f.write('\n')
     
