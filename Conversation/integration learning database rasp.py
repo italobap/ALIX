@@ -16,6 +16,9 @@ import json
 import pygame 
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 import subprocess
+from google.cloud import texttospeech_v1
+from pydub import AudioSegment
+from pydub.playback import play
 
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # face detection
 #absence_time = 300 # 5min
@@ -31,11 +34,38 @@ magnetic_sensor_pin = 32 #gpio12
 music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
 #music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
 
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'speech_gtts_cloud_key.json'
+
 language="pt-br"
-#language_whisper_pt="pt"
-#language_whisper_en="en"
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
+
+def ttsCloud(message):
+    # Instantiates a client
+    client = texttospeech_v1.TextToSpeechClient()
+    # Set the text input to be synthesized
+    synthesis_input = texttospeech_v1.SynthesisInput(text=message)
+
+    voice = texttospeech_v1.VoiceSelectionParams(
+        name = 'pt-BR-Standard-C',
+        language_code = "pt-BR"
+    )
+    audio_config = texttospeech_v1.AudioConfig(
+        audio_encoding=texttospeech_v1.AudioEncoding.MP3
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input, 
+        voice=voice, 
+        audio_config=audio_config
+    )
+
+    # The response's audio_content is binary.
+    with open("output.mp3", "wb") as out:
+        out.write(response.audio_content)
+
+    song = AudioSegment.from_mp3("output.mp3")
+    play(song)
 
 def get_transcription_from_whisper(language_whisper):
     # Set the audio parameters
@@ -68,7 +98,7 @@ def get_transcription_from_whisper(language_whisper):
 
         frames = []
         silence_frames = 0
-        is_speaking = False
+        is_ttsClouding = False
 
         while True:
             current_time = time.time()
@@ -78,19 +108,19 @@ def get_transcription_from_whisper(language_whisper):
             # Convert audio chunks to integers
             audio_data = np.frombuffer(data, dtype=np.int16)
 
-            # Check if the user has started speaking
+            # Check if the user has started ttsClouding
             if np.abs(audio_data).mean() > SILENCE_THRESHOLD:
-                is_speaking = True
+                is_ttsClouding = True
 
             # Detect if the audio chunk is silence
-            if is_speaking:
+            if is_ttsClouding:
                 if np.abs(audio_data).mean() < SILENCE_THRESHOLD:
                     silence_frames += 1
                 else:
                     silence_frames = 0
 
             # End of speech detected
-            if is_speaking and silence_frames > int(SPEECH_END_TIME * (RATE / CHUNK)):
+            if is_ttsClouding and silence_frames > int(SPEECH_END_TIME * (RATE / CHUNK)):
                 print("End of speech detected.")
                 combined_audio_data = b''.join(frames)
                 audio_segment = AudioSegment(
@@ -112,7 +142,7 @@ def get_transcription_from_whisper(language_whisper):
             # Check if it has been more than 10 seconds without speech
             if current_time - detection_time >= limit_input_time:
                 print("No speech detected within the last 10 seconds. Stopping recording.")
-                speak("Não escutei o que você falou. Aperte o botão de novo para falar comigo.")
+                ttsCloud("Não escutei o que você falou. Aperte o botão de novo para falar comigo.")
                 break
 
     except Exception as e:
@@ -123,7 +153,6 @@ def get_transcription_from_whisper(language_whisper):
         stream.close()
         audio.terminate()
     
-
 
 def speak(text):
     tts = gTTS(text= text, lang=language)
@@ -155,7 +184,7 @@ def presence_detection():
             # Release the camera and close the OpenCV window
             cam.release()
             cv2.destroyAllWindows()
-            speak("Encontrei você. Que bom, continue estudando.")
+            ttsCloud("Encontrei você. Que bom, continue estudando.")
             break
 
         # Check if the face detection time has exceeded the limit
@@ -163,7 +192,7 @@ def presence_detection():
             # Release the camera and close the OpenCV window
             cam.release()
             cv2.destroyAllWindows()
-            speak("Não te encontrei.")
+            ttsCloud("Não te encontrei.")
             break
 
 def getLesson(i):
@@ -185,7 +214,7 @@ def getAnswer(lesson, i):
     return content[i][begin:end]
 
 def learning_mode():
-    speak("Qual tarefa você gostaria de fazer? Temos tarefas de leitura, de escuta e avaliação para fixar o conhecimento.")
+    ttsCloud("Qual tarefa você gostaria de fazer? Temos tarefas de leitura, de escuta e avaliação para fixar o conhecimento.")
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
                 frase = get_transcription_from_whisper("pt")
@@ -197,24 +226,26 @@ def learning_mode():
                     if "avaliação" in frase:
                         assessment_mode()
                     if "parar" in frase:
-                        speak("Certo, finalizando modo de estudo.")
+                        ttsCloud("Certo, finalizando modo de estudo.")
                         break
 
 def reading_mode():
     break_count = 0
     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/thoughtful',shell=True, preexec_fn=os.setsid)
     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/thoughtful.py',shell=True, preexec_fn=os.setsid)
-    speak("Qual capítulo você irá ler?")
+    ttsCloud("Qual capítulo você irá ler?")
+    a_time = time.time()
+    spomodoro_time = time.time()
     p.kill()
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
-            frase = get_transcription_from_whisper()
+            frase = get_transcription_from_whisper("pt")
             if frase is not None:
                 if "capítulo" in frase or "capitulo" in frase or "sentimentos" in frase:
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                    speak("Legal. Quando terminar a leitura, lembre de me avisar.")
+                    ttsCloud("Legal. Quando terminar a leitura, lembre de me avisar.")
                     a_time = time.time()
                     spomodoro_time = time.time()
                     total_time = time.time()
@@ -224,28 +255,28 @@ def reading_mode():
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                    speak("Certo, finalizando modo de estudo da leitura.")
+                    ttsCloud("Certo, finalizando modo de estudo da leitura.")
                     total_time = (time.time() - total_time) / 60  # Calculate total reading time in minutes
                     print("Tempo total = " + str(total_time))
                     break
-    while True:
+                
         current_time = time.time()
         if current_time- a_time > absence_time:
             print(time.time() - a_time)
-            speak("Será que você ainda está ai? Vou te procurar.")
+            ttsCloud("Será que você ainda está ai? Vou te procurar.")
             subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Conversation/baseRotation.py',shell=True, preexec_fn=os.setsid)
             presence_detection()
             a_time = time.time() 
-        
+
         if current_time - spomodoro_time > short_pomodoro:
             if(break_count < 4):
                 print(time.time() - spomodoro_time)
                 print(short_pomodoro)
                 p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
                 subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-                speak("Está na hora da sua pausa de 5 minutos.")
+                ttsCloud("Está na hora da sua pausa de 5 minutos.")
                 sleep(5)
-                speak("Pausa finalizada. Está na hora de voltar")
+                ttsCloud("Pausa finalizada. Está na hora de voltar")
                 spomodoro_time = time.time() 
                 break_count += 1
                 p.kill()
@@ -253,16 +284,16 @@ def reading_mode():
                 p.kill()
                 p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                 subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                speak("Está na hora da sua pausa de 15 minutos.")
+                ttsCloud("Está na hora da sua pausa de 15 minutos.")
                 sleep(10)
-                speak("Pausa finalizada. Está na hora de voltar")
+                ttsCloud("Pausa finalizada. Está na hora de voltar")
                 spomodoro_time = time.time()
                 p.kill()
                 break_count = 0  # Reset the break count after a long break
 
 #adjectives primeira pergunta tá errada
 def assessment_mode():
-    speak("Qual capítulo você irar fazer atividades?")
+    ttsCloud("Qual capítulo você irar fazer atividades?")
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
                 frase = get_transcription_from_whisper("pt")
@@ -272,11 +303,11 @@ def assessment_mode():
                     #for j in range(10):
                     #    chapter = "Feelings"
                     #    if chapter in frase:
-                        speak("Vamos fazer as atividades de sentimentos")
+                        ttsCloud("Vamos fazer as atividades de sentimentos")
                     #        break
                     error_count = 0 
                     for i in range(6):
-                        speak(getQuestion(chapter,i))
+                        ttsCloud(getQuestion(chapter,i))
                         skip_question = False
                         while True:
                             if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -286,53 +317,53 @@ def assessment_mode():
                                         if(i<5):
                                             p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                                             subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                                            speak("Acertou, vamos para a próxima pergunta")
+                                            ttsCloud("Acertou, vamos para a próxima pergunta")
                                             p.kill()
                                             error_count = 0 
                                             break
                                         else:
                                             p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                                             subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                                            speak("Você finalizou a atividade. Parabéns")
+                                            ttsCloud("Você finalizou a atividade. Parabéns")
                                             p.kill()
-                                            lockable_compartment()
+                                            #lockable_compartment()
                                             break
                                     else:
                                         p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/sad',shell=True, preexec_fn=os.setsid)
                                         subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/sad.py',shell=True, preexec_fn=os.setsid)
-                                        speak("Está errado tente outra vez")
+                                        ttsCloud("Está errado tente outra vez")
                                         error_count += 1
                                         p.kill()
                                         if error_count >=3:
-                                            speak("Parece que você está com dificuldades. Gostaria de pular essa questão?")
+                                            ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                             while True:
                                                 if GPIO.input(push_button_pin) == GPIO.LOW:
                                                     frase = get_transcription_from_whisper("pt")
                                                     if frase is not None:
                                                         if "sim" in frase:
-                                                            speak("Tudo bem, vamos para a próxima pergunta")
+                                                            ttsCloud("Tudo bem, vamos para a próxima pergunta")
                                                             error_count = 0
                                                             skip_question = True
                                                             break
                                                         if "não" in frase:
-                                                            speak(getQuestion(chapter,i))
+                                                            ttsCloud(getQuestion(chapter,i))
                                                             break
                             if skip_question:
                                 skip_question = False
                                 break
 
                     if "stop" in frase:
-                        speak("Certo, finalizando modo de estudo.")
+                        ttsCloud("Certo, finalizando modo de estudo.")
                         break
 
 def listening_mode():
     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-    speak("Qual capítulo você quer praticar a escuta?") #ver com o vinicius
+    ttsCloud("Qual capítulo você quer praticar a escuta?") #ver com o vinicius
     p.kill()
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
-                frase = get_transcription_from_whisper()
+                frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "adjetivos" in frase:
                         play_music("adjectives")
@@ -345,12 +376,12 @@ def listening_mode():
                     if "sentimentos" in frase:
                         p.kill()
                         p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/celebrating',shell=True, preexec_fn=os.setsid)
-                        speak("Muito bem. Escute com atenção e divirta-se.")
+                        ttsCloud("Muito bem. Escute com atenção e divirta-se.")
                         play_music("feelings")
                         p.kill()
                         p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                         subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
-                        speak("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
+                        ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
                         p.kill()
                     if "comidas" in frase:
                         play_music("food")
@@ -363,7 +394,7 @@ def listening_mode():
                     if "formatos" in frase:
                         play_music("shapes")
                     if "parar" in frase:
-                        speak("Certo, finalizando modo de estudo do listen.")
+                        ttsCloud("Certo, finalizando modo de estudo do listen.")
                         break
 
 def play_music(music_name):
@@ -390,7 +421,7 @@ def lockable_compartment():
     while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
         print("Trava aberta")
 
-    speak("Compartimento de segurança fechado com sucesso")
+    ttsCloud("Compartimento de segurança fechado com sucesso")
 
 def GPIO_Init():
     GPIO.setwarnings(False) # Ignore warning for now
@@ -403,7 +434,7 @@ def GPIO_Init():
 if __name__ == '__main__':
     pygame.init()
     pygame.mixer.init()
-    #GPIO_Init()
+    GPIO_Init()
     p = subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/standby',shell=True, preexec_fn=os.setsid)
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -413,9 +444,9 @@ if __name__ == '__main__':
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-                    '''speak("Certo. Precisamos realizar umas configurações antes de iniciar as atividades.")
+                    '''ttsCloud("Certo. Precisamos realizar umas configurações antes de iniciar as atividades.")
                     sleep(0.50)
-                    speak("Você vai utilizar o compartimento de recompensas?")
+                    ttsCloud("Você vai utilizar o compartimento de recompensas?")
                     p.kill()
                     while True:
                         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -424,7 +455,7 @@ if __name__ == '__main__':
                                 if "sim" in frase:
                                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
                                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-                                    speak("Certo. Aperte o botão para destravar o compartimento e abra a porta")
+                                    ttsCloud("Certo. Aperte o botão para destravar o compartimento e abra a porta")
                                     p.kill()
                                     while True:
                                         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -441,16 +472,16 @@ if __name__ == '__main__':
                                     while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
                                         print("Trava aberta")
 
-                                    speak("Compartimento de recompensas ativado.")
+                                    ttsCloud("Compartimento de recompensas ativado.")
                                     break
                                 if "não" in frase:
-                                    speak("Ok. Compartimento de recompensas desativado.")
+                                    ttsCloud("Ok. Compartimento de recompensas desativado.")
                                     break
 
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/talking',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/talking.py',shell=True, preexec_fn=os.setsid)
-                    speak("Você gostaria de usar a camera para detecção de presença durante as atividades?")
+                    ttsCloud("Você gostaria de usar a camera para detecção de presença durante as atividades?")
                     p.kill()
                     while True:
                         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -458,23 +489,23 @@ if __name__ == '__main__':
                             if frase is not None:
                                 if "sim" in frase:
                                     #presence_detection()
-                                    speak("Ok, detecção de presença ativado.")
+                                    ttsCloud("Ok, detecção de presença ativado.")
                                     break
                                 if "não" in frase:
-                                    speak("Tudo bem, não irei utilizar a detecção de presença durante a atividade.")
+                                    ttsCloud("Tudo bem, não irei utilizar a detecção de presença durante a atividade.")
                                     break
                                 else:
-                                    speak("Não é uma opção, diga sim ou não")
+                                    ttsCloud("Não é uma opção, diga sim ou não")
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)'''
-                    speak("Vamos aprender inglês.")
+                    ttsCloud("Vamos aprender inglês.")
                     p.kill()
                     learning_mode() 
-                    #assessment_mode()
+                    #reading_mode()
 
                 if "tchau" in frase:
-                    speak("Até mais, mal posso esperar para conversar com você de novo.")
+                    ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
                     break
                 else:
-                    speak("Não entendi o que você falou, fale outra vez.")
+                    ttsCloud("Não entendi o que você falou, fale outra vez.")

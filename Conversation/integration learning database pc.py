@@ -16,7 +16,6 @@ import keyboard
 import pygame 
 #import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 import subprocess
-import os
 from google.cloud import texttospeech_v1
 from pydub import AudioSegment
 from pydub.playback import play
@@ -154,13 +153,6 @@ def get_transcription_from_whisper(language_whisper):
         stream.stop_stream()
         stream.close()
         audio.terminate()
-    
-def speak(text):
-    tts = gTTS(text= text, lang=language, tld="com.br", slow= False)
-    filename = "output.mp3"
-    tts.save(filename)
-    playsound.playsound(filename)
-    os.remove("output.mp3")
 
 def presence_detection():
     cam = cv2.VideoCapture(0)

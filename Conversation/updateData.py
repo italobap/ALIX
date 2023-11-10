@@ -4,11 +4,11 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 
-#if not os.path.exists("/home/alix/Desktop/Questionnaires"):      
-#    os.makedirs("/home/alix/Desktop/Questionnaires") 
+if not os.path.exists("/home/alix/Desktop/Questionnaires"):      
+    os.makedirs("/home/alix/Desktop/Questionnaires") 
 
-if not os.path.exists("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires"):      
-    os.makedirs("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires")
+#if not os.path.exists("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires"):      
+#    os.makedirs("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires")
 
 cred = credentials.Certificate("credentials.json")
 
