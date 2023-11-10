@@ -39,7 +39,22 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'speech_gtts_cloud_key.json'
 language="pt-br"
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
+expressionAddress = '/home/alix/Documents/ALIX/ALIX/DisplayLab/'
+processRun = True
 
+def push_button_handler(sig, frame):
+    GPIO.cleanup()
+    
+def runProcess(expressionName):
+    global processRun
+    global p
+    executando = 'exec ' + expressionAddress + expressionName
+    if processRun:
+        p.kill()
+        
+    p=subprocess.Popen(executando, shell=True, preexec_fn=os.setsid)
+    processRun = True
+  
 def ttsCloud(message):
     # Instantiates a client
     client = texttospeech_v1.TextToSpeechClient()
@@ -234,8 +249,8 @@ def reading_mode():
     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/thoughtful',shell=True, preexec_fn=os.setsid)
     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/thoughtful.py',shell=True, preexec_fn=os.setsid)
     ttsCloud("Qual capítulo você irá ler?")
-    a_time = time.time()
-    spomodoro_time = time.time()
+    a_time = time.time() * 50
+    spomodoro_time = a_time
     p.kill()
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -246,17 +261,20 @@ def reading_mode():
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                     ttsCloud("Legal. Quando terminar a leitura, lembre de me avisar.")
+                    # Valor inicial de absence_time
                     a_time = time.time()
+                    # Valor inicial tempo de break reminder
                     spomodoro_time = time.time()
-                    total_time = time.time()
+                    # Valor inicial do tempo de atividade
+                    start_time = time.time()
                     p.kill()
-                    break
+                    
                 if "parar" in frase:
                     p.kill()
                     p=subprocess.Popen('exec /home/alix/Documents/ALIX/ALIX/DisplayLab/happy',shell=True, preexec_fn=os.setsid)
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)
                     ttsCloud("Certo, finalizando modo de estudo da leitura.")
-                    total_time = (time.time() - total_time) / 60  # Calculate total reading time in minutes
+                    total_time = (time.time() - start_time) / 60  # Calculate total reading time in minutes
                     print("Tempo total = " + str(total_time))
                     break
                 
@@ -429,7 +447,8 @@ def GPIO_Init():
     GPIO.setup(solenoid_pin, GPIO.OUT) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
     GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
     GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
-
+    GPIO.add_event_detect(push_button_pin, GPIO.FALLING, 
+            callback=push_button_handler, bouncetime=100)
 
 if __name__ == '__main__':
     pygame.init()
