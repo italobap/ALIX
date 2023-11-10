@@ -16,7 +16,7 @@ anguloBracoEsquerdo = 155
 anguloOmbroEsquerdo = 180
 anguloBracoDireito = 30
 anguloOmbroDireito = 30
-anguloCabeca = 110
+anguloCabeca = 90
 
 variacao = 150
 velocidade = 0.005

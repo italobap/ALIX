@@ -12,6 +12,10 @@ bracoDireito = 2 #Direita do ALIX
 ombroDireito = 3 #Direita do ALIX
 cabeca = 4
 
+anguloBracoEsquerdo = 150
+anguloBracoDireito = 31
+anguloCabeca = 90
+
 repeticoes = 2
 velocidade = 0.01
 variacao = 30
@@ -32,33 +36,30 @@ def moveMotor(servo, startAngle, variacaoAngle, delay):
         for i in range (startAngle, endAngle):
             kit.servo[servo].angle = i
             time.sleep(delay)
-            #print(i, delay)
 
         # Exemplo: comeca em 180, final do movimento anterior, e vai ate 120
         for i in range (endAngle, startAngle - variacaoAngle, -1):
             kit.servo[servo].angle = i
             time.sleep(delay)
-            #print(i, delay)
         
         for i in range (startAngle - variacaoAngle, startAngle):
             kit.servo[servo].angle = i
             time.sleep(delay)
-            #print(i, delay)
 
 if __name__ == "__main__":
     threads = []  # Lista para armazenar as threads
 
     #braco Esquerdo
     for i in range(2):
-        t = threading.Thread(target=moveMotor, args=(i, 150, variacao, velocidade))  # Crie uma thread para cada servo
+        t = threading.Thread(target=moveMotor, args=(i, anguloBracoEsquerdo, variacao, velocidade))  # Crie uma thread para cada servo
         threads.append(t)  # Adicione a thread a lista
         
     #braco Direito
     for i in range(2,4):
-        t = threading.Thread(target=moveMotor, args=(i, 31, variacao, velocidade))  # Crie uma thread para cada servo
+        t = threading.Thread(target=moveMotor, args=(i, anguloBracoDireito, variacao, velocidade))  # Crie uma thread para cada servo
         threads.append(t)  # Adicione a thread a lista
     
-    t1 = threading.Thread(target=moveMotor, args=(4, 90, variacao, velocidade))  # Crie uma thread para cada servo
+    t1 = threading.Thread(target=moveMotor, args=(cabeca, anguloCabeca, variacao, velocidade))  # Crie uma thread para cada servo
     threads.append(t1)  # Adicione a thread a lista
         
     for t in threads:
@@ -77,5 +78,5 @@ if __name__ == "__main__":
 
     kit.servo[bracoDireito].angle = 30
     kit.servo[ombroDireito].angle = 30
-    kit.servo[cabeca].angle = 90
+    kit.servo[cabeca].angle = anguloCabeca
     print("Done!")

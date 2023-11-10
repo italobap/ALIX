@@ -21,7 +21,7 @@ anguloOmbroDireito = 30
 anguloCabeca = 90
 
 variacao = 30
-velocidade = 0.02
+velocidade = 0.01
 repeticoes = 2
 
 
