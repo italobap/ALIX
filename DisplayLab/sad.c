@@ -172,4 +172,7 @@ int main(int argc, char **argv){
 	snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/neutral/frame0.png", f);
 	PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
 	sleep(0.01);
+	/**snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/neutral/frame1.png", f);
+	PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
+	sleep(0.01);**/
 }

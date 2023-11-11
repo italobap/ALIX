@@ -5,8 +5,8 @@ from firebase_admin import firestore
 
 
 codificacao = 'UTF-8'
-if not os.path.exists("/home/alix/Desktop/Questionnaires"):      
-    os.makedirs("/home/alix/Desktop/Questionnaires") 
+if not os.path.exists("/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires"):      
+    os.makedirs("/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires") 
 
 # if not os.path.exists("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires"):      
 #    os.makedirs("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires")
