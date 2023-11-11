@@ -162,7 +162,7 @@ int main(int argc, char **argv){
 
 	int f,h;
 	char file[200];
-	for(h=0; h<2;h++){
+	for(h=0; h<1;h++){
 		for(f=0; f<61;f++){			
 			snprintf(file, sizeof(file), "/home/alix/Documents/ALIX/ALIX/DisplayLab/images/neutral/frame%d.png", f);
 			PNGTest(&dev, file, SCREEN_WIDTH, SCREEN_HEIGHT);
