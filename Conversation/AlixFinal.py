@@ -226,12 +226,12 @@ def learning_mode(lock_use, presence_use):
                     for j in range(10):
                         if getLesson(j).lower() in frase:
                             chapter = getLesson(j).lower()
-                            runProcess('thoughtful')
+                            runProcess('happy')
                             ttsCloud("Vamos fazer as atividades de " + chapter)
                             reading_mode(chapter,presence_use)
                             listening_mode(chapter, presence_use)
                             assessment_mode(chapter,presence_use)
-                            runProcess('thoughtful')
+                            runProcess('happy')
                             ttsCloud("Você terminou o capítulo. Muito bem")
                             (lock_use, presence_use)
                             final_time = time.time()
@@ -241,7 +241,7 @@ def learning_mode(lock_use, presence_use):
                                 lockable_compartment()
                             break
                 if "parar" in frase:
-                    runProcess('thoughtful')
+                    runProcess('talking')
                     ttsCloud("Certo, finalizando modo de estudo.")
                     break
 
@@ -254,7 +254,6 @@ def reading_mode(chapter,presence_use):
         spomodoro_time = current_time * 100
         runProcess('thoughtful')
         ttsCloud("Você já pode iniciar  a leitura do caítulo" + chapter)
-        runProcess('thoughtful')
         ttsCloud("Lembre que ao finalizar a leitura do capítulo, me avise apertando o botão.")
         while True:
             current_time = time.time()
@@ -263,7 +262,7 @@ def reading_mode(chapter,presence_use):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
-                        runProcess('thoughtful')
+                        runProcess('happy')
                         ttsCloud("Certo, finalizando modo de estudo da leitura.")
                         break
                     else:
@@ -284,18 +283,18 @@ def reading_mode(chapter,presence_use):
                 if(break_count < 4):
                     print(time.time() - spomodoro_time)
                     print(short_pomodoro)
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Está na hora da sua pausa de 5 minutos.")
                     sleep(5)
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time() 
                     break_count += 1
                 else:
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Está na hora da sua pausa de 15 minutos.")
                     sleep(10)
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time()
                     break_count = 0  # Reset the break count after a long break
@@ -307,7 +306,6 @@ def reading_mode(chapter,presence_use):
         spomodoro_time = current_time * 100
         runProcess('thoughtful')
         ttsCloud("Você já pode iniciar  a leitura do caítulo" + chapter)
-        runProcess('thoughtful')
         ttsCloud("Lembre que ao finalizar a leitura do capítulo, me avise apertando o botão.")
         while True:
             current_time = time.time()
@@ -316,7 +314,7 @@ def reading_mode(chapter,presence_use):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
-                        runProcess('thoughtful')
+                        runProcess('happy')
                         ttsCloud("Certo, finalizando modo de estudo da leitura.")
                         break
                     else:
@@ -327,18 +325,18 @@ def reading_mode(chapter,presence_use):
                 if(break_count < 4):
                     print(time.time() - spomodoro_time)
                     print(short_pomodoro)
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Está na hora da sua pausa de 5 minutos.")
                     sleep(5)
-                    runProcess('thoughtful')
+                    runProcess('happy')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time() 
                     break_count += 1
                 else:
-                    runProcess('thoughtful')
+                    runProcess('standby')
                     ttsCloud("Está na hora da sua pausa de 15 minutos.")
                     sleep(10)
-                    runProcess('thoughtful')
+                    runProcess('happy')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time()
                     break_count = 0  # Reset the break count after a long break
