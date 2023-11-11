@@ -6,37 +6,102 @@ absence_time = 100
 short_pomodoro = 5 #ciclo de 25 min#
 global a_time
 global spomodoro_time 
+chapter = "Cores"
 
-def pomodoro():
-    break_count = 0
+def getLesson(i):
+    f = open("Lessons", "r")
+    content = f.readlines()
+    return content[i][0:content[i].find(',')]
 
-    current_time = time.time()
-    if current_time- a_time > absence_time:
-        print(time.time() - a_time)
-        print("Será que você ainda está ai? Vou te procurar.")
-        a_time = time.time() 
-    
-    if current_time - spomodoro_time > short_pomodoro:
-        if(break_count < 4):
-            print(time.time() - spomodoro_time)
-            print(short_pomodoro)
-            print("Está na hora da sua pausa de 5 minutos.")
-            sleep(5)
-            print("Pausa finalizada. Está na hora de voltar")
-            spomodoro_time = time.time() 
-            break_count += 1
-        else:
-            print("Está na hora da sua pausa de 15 minutos.")
-            sleep(10)
-            print("Pausa finalizada. Está na hora de voltar")
-            spomodoro_time = time.time()
-            break_count = 0  # Reset the break count after a long break
+def getQuestion(lesson, i):
+    f = open(f"Questionnaires/{lesson}", "r")
+    content = f.readlines()
+    end = content[i].find(',')
+    return content[i][0:end]
+
+def getAnswer(lesson, i):
+    f = open(f"Questionnaires/{lesson}", "r")
+    content = f.readlines()
+    begin = content[i].find(',') + 1
+    end = content[i].find('/n')
+    return content[i][begin:end]
+
+def getRange(lesson):
+    f = open(f"Questionnaires/{lesson}", "r")
+    content = f.readlines()
+    n = 0
+    for line in content:
+        if lesson in line:
+            i=n
+        n = n+1
+    return n
+
+def assessment_mode(chapter):
+    print("Vamos praticar a avaliação de " + chapter + "?")
+    outer_break = False
+    while True:
+        if keyboard.read_key() == "r":
+                frase= input("Escreva sua resposta: ")
+                if frase is not None:
+                    frase_lower = frase.lower()
+                    if "sim" in frase_lower:
+                        print("Vamos começar.")
+                        error_count = 0
+                        nota = 0
+                        for i in range(getRange(chapter)):
+                            print(getQuestion(chapter,i))
+                            skip_question = False
+                            while True:
+                                if keyboard.read_key() == "r":
+                                    frase= input("Escreva sua resposta: ")
+                                    if frase is not None:
+                                        if getAnswer(chapter, i).lower() in frase:
+                                            if(i < ((getRange(chapter))-1)):
+                                                print("Acertou, vamos para a próxima pergunta")
+                                                error_count = 0
+                                                nota += 1
+                                                print("Notal atual ="  +  str(nota))
+                                                break
+                                            else:
+                                                print("Você finalizou a atividade. Parabéns")
+                                                nota += 1
+                                                print("Notal atual ="  +  str(nota))
+                                                media = (nota/getRange(chapter)) * 10
+                                                #lockable_compartment()
+                                                print(media)
+                                                outer_break = True
+                                                break
+                                        else:
+                                            print("Está errado tente outra vez")
+                                            error_count += 1
+                                            if error_count >=3:
+                                                print("Parece que você está com dificuldades. Gostaria de pular essa questão?")
+                                                while True:
+                                                    if keyboard.read_key() == "r":
+                                                        frase = input("Escreva sua resposta: ")
+                                                        if frase is not None:
+                                                            if "sim" in frase:
+                                                                print("Tudo bem, vamos para a próxima pergunta")
+                                                                error_count = 0
+                                                                skip_question = True
+                                                                break
+                                                            if "não" in frase:
+                                                                print(getQuestion(chapter,i))
+                                                                break
+                                        if skip_question:
+                                            skip_question = False
+                                            break
+                                if outer_break:
+                                    break 
+
+                    elif "não" in frase:
+                        print("Certo, finalizando modo de estudo.")
+                        break
+                    else:
+                        print("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de avaliação.")
+        if outer_break:
+            break  # This break will exit the outer while loop
+
 
 if __name__ == '__main__':
-    print("Iniciando pomodoro")
-    pomodoro()
-    print("Pomodoro inicializado")
-    spomodoro_time = time.time()
-    a_time = time.time()
-    while True:
-        pomodoro()
+    assessment_mode(chapter)

@@ -7,16 +7,16 @@ from gtts import gTTS
 import playsound
 import time
 from time import sleep
-#from datetime import time
 import cv2
 from senha import API_KEY
 import speech_recognition as sr
 import requests
 import json
 import keyboard
-import pygame
+import pygame 
 #import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 import subprocess
+import os
 from google.cloud import texttospeech_v1
 from pydub import AudioSegment
 from pydub.playback import play
@@ -34,11 +34,12 @@ solenoid_pin = 15
 push_button_pin = 19 #gpio10
 magnetic_sensor_pin = 32 #gpio12
 
-#music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
-music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
+music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
+#music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
 
 language="pt"
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+
 
 
 def ttsCloud(message):
@@ -56,8 +57,8 @@ def ttsCloud(message):
     )
 
     response = client.synthesize_speech(
-        input=synthesis_input,
-        voice=voice,
+        input=synthesis_input, 
+        voice=voice, 
         audio_config=audio_config
     )
 
@@ -153,6 +154,13 @@ def get_transcription_from_whisper(language_whisper):
         stream.stop_stream()
         stream.close()
         audio.terminate()
+    
+def speak(text):
+    tts = gTTS(text= text, lang=language, tld="com.br", slow= False)
+    filename = "output.mp3"
+    tts.save(filename)
+    playsound.playsound(filename)
+    os.remove("output.mp3")
 
 def presence_detection():
     cam = cv2.VideoCapture(0)
@@ -198,7 +206,7 @@ def getQuestion(lesson, i):
     content = f.readlines()
     end = content[i].find(',')
     return content[i][0:end]
-
+  
 def getAnswer(lesson, i):
     f = open(f"Questionnaires/{lesson}", "r")
     content = f.readlines()
@@ -206,55 +214,49 @@ def getAnswer(lesson, i):
     end = content[i].find('/n')
     return content[i][begin:end]
 
-def getRange(lesson):
-    f = open(f"Questionnaires/{lesson}", "r")
-    content = f.readlines()
-    n = 0
-    for line in content:
-        if lesson in line:
-            i=n
-        n = n+1
-    return n
-
 def learning_mode():
-    ttsCloud("Qual capítulo você gostaria de aprender?")
+    ttsCloud("Qual tarefa você gostaria de fazer? Temos tarefas de leitura, de escuta e avaliação para fixar o conhecimento.")
     while True:
         if keyboard.read_key() == "r":
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
-                    if "capítulo" in frase:
-                        for j in range(10):
-                            if getLesson(j).lower() in frase:
-                                chapter = getLesson(j).lower()
-                                ttsCloud("Vamos fazer as atividades de " + chapter)
-                                reading_mode(chapter)
-                                listening_mode(chapter)
-                                assessment_mode(chapter)
-                                ttsCloud("Você terminou o capítulo. Muito bem")
-                                break
+                    if "leitura" in frase:
+                        reading_mode()
+                    if "escuta" in frase:
+                        listening_mode()
+                    if "avaliação" in frase:
+                        assessment_mode()
                     if "parar" in frase:
                         ttsCloud("Certo, finalizando modo de estudo.")
                         break
 
-def reading_mode(chapter):
+def reading_mode():
     break_count = 0
-    current_time = time.time()
-    a_time = current_time * 100
-    spomodoro_time = current_time * 100
-    start_time = time.time()
+    a_time = time.max
+    spomodoro_time = time.max
     print(a_time)
-    ttsCloud("Vamos fazer atividade de leitura?")
+    ttsCloud("Qual capítulo você irá ler?")
     while True:
-        current_time = time.time()
         if keyboard.read_key() == "r":
-            frase = get_transcription_from_whisper("pt")
+            frase = get_transcription_from_whisper()
             if frase is not None:
-                if "terminei" in frase:
+                if "capítulo" in frase or "capitulo" in frase or "sentimentos" in frase:
+                    ttsCloud("Legal. Quando terminar a leitura, lembre de me avisar.")
+                    # Valor inicial de absence_time
+                    a_time = time.time()
+                    # Valor inicial tempo de break reminder
+                    spomodoro_time = time.time()
+                    # Valor inicial do tempo de atividade
+                    start_time = time.time()
+                    continue
+                    
+                if "parar" in frase:
                     ttsCloud("Certo, finalizando modo de estudo da leitura.")
                     total_time = (time.time() - start_time) / 60  # Calculate total reading time in minutes
                     print("Tempo total = " + str(total_time))
                     break
                 
+        current_time = time.time()
         if current_time - a_time > absence_time:
             print(time.time() - a_time)
             ttsCloud("Será que você ainda está ai? Vou te procurar.")
@@ -278,77 +280,91 @@ def reading_mode(chapter):
                 spomodoro_time = time.time()
                 break_count = 0  # Reset the break count after a long break
 
-def listening_mode(chapter):
-    ttsCloud("Vamos praticar a atividade de escuta?") #ver com o vinicius
-    while True:
-        if keyboard.read_key() == "r":
-                frase = get_transcription_from_whisper("pt")
-                if frase is not None:
-                    if "sim" in frase:
-                        ttsCloud("Muito bem. Escute com atenção e divirta-se.")
-                        play_music(chapter)
-                        ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
-                        break
-                    if "não" in frase:
-                        ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
-                        break
-                    else:
-                        ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de escuta.")
-                        break
-
 #adjectives primeira pergunta tá errada
-def assessment_mode(chapter):
-    ttsCloud("Vamos praticar a avaliação de " + chapter + "?")
+def assessment_mode():
+    ttsCloud("Qual capítulo você irar fazer atividades?")
     while True:
         if keyboard.read_key() == "r":
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
-                    if "sim" in frase:
-                        ttsCloud("Vamos começar.")
-                        error_count = 0
-                        for i in range(getRange(chapter)):
-                            ttsCloud(getQuestion(chapter,i))
-                            skip_question = False
-                            while True:
-                                if keyboard.read_key() == "r":
-                                    frase = get_transcription_from_whisper("en")
-                                    if frase is not None:
-                                        if getAnswer(chapter, i).lower() in frase:
-                                            if(i<getRange(chapter)):
-                                                ttsCloud("Acertou, vamos para a próxima pergunta")
-                                                error_count = 0
-                                                break
-                                            else:
-                                                ttsCloud("Você finalizou a atividade. Parabéns")
-                                                #lockable_compartment()
-                                                frase = None
-                                                break
+                    for j in range(10):
+                        if getLesson(j) in frase:
+                            chapter = getLesson(j)
+                            ttsCloud("Vamos fazer as atividades de " + chapter)
+                            break
+                    error_count = 0 
+                    for i in range(6):
+                        ttsCloud(getQuestion(chapter,i))
+                        skip_question = False
+                        while True:
+                            if keyboard.read_key() == "r":
+                                frase = get_transcription_from_whisper("en")
+                                if frase is not None:
+                                    if getAnswer(chapter, i).lower() in frase:
+                                        if(i<5):
+                                            ttsCloud("Acertou, vamos para a próxima pergunta")
+                                            error_count = 0 
+                                            break
                                         else:
-                                            ttsCloud("Está errado tente outra vez")
-                                            error_count += 1
-                                            if error_count >=3:
-                                                ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
-                                                while True:
-                                                    if keyboard.read_key() == "r":
-                                                        frase = get_transcription_from_whisper("pt")
-                                                        if frase is not None:
-                                                            if "sim" in frase:
-                                                                ttsCloud("Tudo bem, vamos para a próxima pergunta")
-                                                                error_count = 0
-                                                                skip_question = True
-                                                                break
-                                                            if "não" in frase:
-                                                                ttsCloud(getQuestion(chapter,i))
-                                                                break
-                                if skip_question:
-                                    skip_question = False
-                                    break
+                                            ttsCloud("Você finalizou a atividade. Parabéns")
+                                            #lockable_compartment()
+                                            break
+                                    else:
+                                        ttsCloud("Está errado tente outra vez")
+                                        error_count += 1
+                                        if error_count >=3:
+                                            ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
+                                            while True:
+                                                if keyboard.read_key() == "r":
+                                                    frase = get_transcription_from_whisper("pt")
+                                                    if frase is not None:
+                                                        if "sim" in frase:
+                                                            ttsCloud("Tudo bem, vamos para a próxima pergunta")
+                                                            error_count = 0
+                                                            skip_question = True
+                                                            break
+                                                        if "não" in frase:
+                                                            ttsCloud(getQuestion(chapter,i))
+                                                            break
+                            if skip_question:
+                                skip_question = False
+                                break
 
-                    if "não" in frase:
+                    if "stop" in frase:
                         ttsCloud("Certo, finalizando modo de estudo.")
                         break
-                    else:
-                        ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de avaliação.")
+
+def listening_mode():
+    ttsCloud("Qual capítulo você quer praticar a escuta?") #ver com o vinicius
+    while True:
+        if keyboard.read_key() == "r":
+                frase = get_transcription_from_whisper()
+                if frase is not None:
+                    if "adjetivos" in frase:
+                        play_music("adjectives")
+                    if "alfabeto" in frase:
+                        play_music("alphabet")
+                    if "animais" in frase:
+                        play_music("animals")
+                    if "cores" in frase:
+                        play_music("colors")
+                    if "sentimentos" in frase:
+                        ttsCloud("Muito bem. Escute com atenção e divirta-se.")
+                        play_music("feelings")
+                        ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
+                    if "comidas" in frase:
+                        play_music("food")
+                    if "cumprimentos" in frase:
+                        play_music("greetings")
+                    if "numeros" in frase:
+                        play_music("numbers")
+                    if "preposições" in frase:
+                        play_music("prepositions")
+                    if "formatos" in frase:
+                        play_music("shapes")
+                    if "parar" in frase:
+                        ttsCloud("Certo, finalizando modo de estudo do listen.")
+                        break
 
 def play_music(music_name):
 	pygame.mixer.music.load(music_path + music_name +".mp3")
@@ -358,9 +374,36 @@ def play_music(music_name):
 	while pygame.mixer.music.get_busy() == True:
 		continue
 
+'''def lockable_compartment():
+    while True:
+        if keyboard.read_key() == "r":
+            print("Button is pressed")
+            GPIO.output(solenoid_pin, 1)
+            while (GPIO.input(magnetic_sensor_pin) == GPIO.LOW):
+                print(GPIO.input(magnetic_sensor_pin))
+                GPIO.output(solenoid_pin, 1)
+            
+            sleep(2)
+            GPIO.output(solenoid_pin, 0)
+            break
+
+    while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
+        print("Trava aberta")
+
+    ttsCloud("Compartimento de segurança fechado com sucesso")
+
+def GPIO_Init():
+    GPIO.setwarnings(False) # Ignore warning for now
+    GPIO.setmode(GPIO.BOARD) # Use physical pin numbering
+    GPIO.setup(solenoid_pin, GPIO.OUT) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
+    GPIO.setup(magnetic_sensor_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP) # Set pin 10 to be an input pin and set initial value to be pulled low (off)
+    GPIO.setup(push_button_pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)'''
+
+
 if __name__ == '__main__':
     pygame.init()
     pygame.mixer.init()
+    #GPIO_Init()
     while True:
         if keyboard.read_key() == "r":
             frase = get_transcription_from_whisper("pt")
@@ -382,7 +425,7 @@ if __name__ == '__main__':
                                             while (GPIO.input(magnetic_sensor_pin) == GPIO.LOW):
                                                 print(GPIO.input(magnetic_sensor_pin))
                                                 GPIO.output(solenoid_pin, 1)
-
+                                            
                                             sleep(1)
                                             GPIO.output(solenoid_pin, 0)
                                             break
@@ -410,10 +453,9 @@ if __name__ == '__main__':
                                     break
                                 else:
                                     ttsCloud("Não é uma opção, diga sim ou não")'''
-                    ttsCloud("Vamos aprender inglês!!!")
-                    learning_mode()
-                    frase = None
-                    #reading_mode()
+                    ttsCloud("Vamos aprender inglês.")
+                    learning_mode() 
+                    #assessment_mode()
 
                 if "tchau" in frase:
                     ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")

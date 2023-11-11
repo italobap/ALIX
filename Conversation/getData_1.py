@@ -28,8 +28,14 @@ def getAudio(lesson):
     end = content[i].find('/n')
     return content[i][begin:end]
 
-#print(getAudio("Colors"))
-for i in range(10):
-    print( getLesson(i))
-#print(getQuestion("Colors",1))
-#print(getAnswer("Colors",1))
+def getRange(lesson):
+    f = open(f"Questionnaires/{lesson}", "r")
+    content = f.readlines()
+    n = 0
+    for line in content:
+        if lesson in line:
+            i=n
+        n = n+1
+    return n
+
+print(getRange("Cores"))
