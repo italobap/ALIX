@@ -4,10 +4,11 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 
+codificacao = 'UTF-8'
 if not os.path.exists("/home/alix/Desktop/Questionnaires"):      
     os.makedirs("/home/alix/Desktop/Questionnaires") 
 
-#if not os.path.exists("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires"):      
+# if not os.path.exists("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires"):      
 #    os.makedirs("C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/Conversation/Questionnaires")
 
 cred = credentials.Certificate("credentials.json")
@@ -20,22 +21,26 @@ query = db.collection("Lesson").where("subject","==","english").stream()
 
 f = open('Lessons', 'w')
 
+nameLesson = ''
 for lesson in query:
+    nameLesson = str(lesson.get('name')).lower()
     #print(f"{lesson.id} => {lesson.to_dict()}")
-    print(f"{lesson.get('name')}")
+    print(f"{nameLesson}")
     
     with open('Lessons', 'a') as f:
-        f.write(f"{lesson.get('name')},{lesson.get('ListeningSection').get('audio')}")
+        f.write(f"{nameLesson},{lesson.get('ListeningSection').get('audio')}")
         f.write('\n')
     
-    f=open(f"Questionnaires/{lesson.get('name')}" ,'w', encoding='Windows-1252')
+    f=open(f"Questionnaires/{nameLesson}" ,'w', encoding=codificacao)
     
     
     questionnaire=lesson.get("AssesmentSection").get("Questionnaire")
     for question in questionnaire:
-        print(f"{question.get('question')},{question.get('expectedAnswer')}")
-        with open(f"Questionnaires/{lesson.get('name')}" ,'a', encoding='Windows-1252') as f:
-            f.write(f"{question.get('question')},{question.get('expectedAnswer')}")
+        questionName = str(question.get('question')).lower()
+        expectedAnswer = str(question.get('expectedAnswer')).lower()
+        print(f"{questionName},{expectedAnswer}")
+        with open(f"Questionnaires/{nameLesson}" ,'a', encoding=codificacao) as f:
+            f.write(f"{questionName},{expectedAnswer}")
             f.write('\n')
     
 
