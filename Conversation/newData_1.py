@@ -25,3 +25,7 @@ def addResults(duration, grade, lesson):
     print(f"Added Results")
   
 addResults(30, 8.2, "Adjetivos")
+
+
+
+

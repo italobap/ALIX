@@ -22,7 +22,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 #Google cloud tts credentials
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'speech_gtts_cloud_key.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/alix/Documents/ALIX/ALIX/Conversation/speech_gtts_cloud_key.json'
 
 #face detection
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml')
@@ -56,7 +56,7 @@ headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/js
 link = "https://api.openai.com/v1/chat/completions"
 
 #Database Connection
-cred = credentials.Certificate("credentials.json")
+cred = credentials.Certificate("/home/alix/Documents/ALIX/ALIX/Conversation/credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -191,26 +191,26 @@ def generate_response(prompt):
     return mensagem
 
 #---------------------------Database Functions-----------------------------
-def getLesson(i):
-    f = open("Lessons", "r")
-    content = f.readlines()
-    return content[i][0:content[i].find(',')]
-
 def getQuestion(lesson, i):
-    f = open(f"Questionnaires/{lesson}", "r")
+    f = open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{lesson}", "r")
     content = f.readlines()
     end = content[i].find(',')
     return content[i][0:end]
-
+  
 def getAnswer(lesson, i):
-    f = open(f"Questionnaires/{lesson}", "r")
+    f = open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{lesson}", "r")
     content = f.readlines()
     begin = content[i].find(',') + 1
     end = content[i].find('/n')
     return content[i][begin:end]
 
+def getLesson(i):
+    f = open("/home/alix/Documents/ALIX/ALIX/Conversation/Lessons", "r")
+    content = f.readlines()
+    return content[i][0:content[i].find(',')]
+
 def getRange(lesson):
-    f = open(f"Questionnaires/{lesson}", "r")
+    f = open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{lesson}", "r")
     content = f.readlines()
     n = 0
     for line in content:
@@ -219,16 +219,36 @@ def getRange(lesson):
         n = n+1
     return n
 
-def addAbsence():
-    absenceData = {"notified": False, "timeOfOccurence": datetime.now()}
+def getCustomQuestion(custom, i):
+    f = open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{custom}", "r")
+    content = f.readlines()
+    end = content[i].find(',')
+    return content[i][0:end]
+    
+def getCustomAnswer(custom, i):
+    f = open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{custom}", "r")
+    content = f.readlines()
+    begin = content[i].find(',') + 1
+    end = content[i].find('/n')
+    return content[i][begin:end]
+    
+def getCustoms(i):
+    f = open("/home/alix/Documents/ALIX/ALIX/Conversation/Customs", "r")
+    content = f.readlines()
+    return content[i][0:content[i].find('/n')]
+
+def addAbsence(timeDate):
+    absenceData = {"notified": False, "timeOfOccurence": timeDate}
     db.collection("Absences").add(absenceData)
     print(f"Added Absence")
     
 def addResults(duration, grade, lesson):
-    resultsData = {"date": datetime.now() , "duration": duration, "grade": grade, "lesson": lesson}
-    db.collection("Results").add(resultsData)
+    docs = (db.collection("Lesson").where("name", "==", lesson).stream())
+    for doc in docs:
+        db.collection("Lesson").document(doc.id).update({"duration":duration})
+        db.collection("Lesson").document(doc.id).update({"grade":grade})
     print(f"Added Results")
-
+ 
 #-----------------------Functions of learning mode---------------------------
 def learning_mode(lock_use, presence_use):
     global push_button_is_pressed
@@ -251,7 +271,7 @@ def learning_mode(lock_use, presence_use):
                             #listening_mode(chapter, presence_use)
                             nota = assessment_mode(chapter,presence_use)
                             print(nota)
-                            runProcess('talking')
+                            runProcess('happy')
                             ttsCloud("Você terminou o capítulo. Muito bem")
                             final_time = time.time()
                             #Tempo gasto na atividade
@@ -302,7 +322,6 @@ def reading_mode(chapter,presence_use):
                 if presence == True:
                     a_time = time.time() 
                 elif presence == False:
-                    addAbsence()
                     break
             
             if current_time - spomodoro_time > short_pomodoro:
@@ -406,7 +425,6 @@ def listening_mode(chapter,presence_use):
                 if presence == True:
                     a_time = time.time()
                 elif presence == False:
-                    addAbsence()
                     break
     
     elif presence_use == False:
@@ -526,7 +544,6 @@ def assessment_mode(chapter,presence_use):
                                     if presence == True:
                                         a_time = time.time() 
                                     elif presence == False:
-                                        addAbsence()
                                         break 
                                 if current_time - spomodoro_time > short_pomodoro:
                                     if(break_count < 4):
@@ -741,6 +758,7 @@ def presence_detection():
             timestamp = time.time()
             date_time = datetime.fromtimestamp(timestamp)
             str_date_time = date_time.strftime("%d-%m-%Y, %H:%M:%S")
+            addAbsence(str_date_time)
             presence = False
             return presence
 
