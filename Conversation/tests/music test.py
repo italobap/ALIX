@@ -1,7 +1,8 @@
 import pygame
-
-#music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
-music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
+import os
+#os.environ['SDL_AUDIODRIVER'] = 'pulseaudio'
+music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
+#music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
 
 pygame.init()
 pygame.mixer.init()
@@ -14,5 +15,5 @@ def play_music(music_name):
 	while pygame.mixer.music.get_busy() == True:
 		continue
 
-name = "food"
+name = "saudações"
 play_music(name)

@@ -6,7 +6,7 @@ import time
 
 ################# ESTABELECENDO CONEXÃO COM BD ##########################
 
-cred = credentials.Certificate("cred.json")
+cred = credentials.Certificate("credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -24,7 +24,7 @@ def addResults(duration, grade, lesson):
         db.collection("Lesson").document(doc.id).update({"grade":grade})
     print(f"Added Results")
   
-addResults(30, 8.2, "Adjetivos")
+addResults(30, 8.2, "Saudações")
 
 
 

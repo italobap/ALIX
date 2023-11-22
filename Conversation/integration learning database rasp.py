@@ -8,7 +8,6 @@ import playsound
 import time
 from time import sleep
 import cv2
-from senha import API_KEY
 import speech_recognition as sr
 import requests
 import json
@@ -37,8 +36,8 @@ music_path = "/home/alix/Documents/ALIX/ALIX/alix songs/"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'speech_gtts_cloud_key.json'
 
 language="pt-br"
-headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
+headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 expressionAddress = '/home/alix/Documents/ALIX/ALIX/DisplayLab/'
 processRun = True
 
@@ -317,7 +316,7 @@ def assessment_mode():
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "sentimentos" in frase:
-                        chapter = "Feelings"
+                        chapter = "sentimentos"
                     #for j in range(10):
                     #    chapter = "Feelings"
                     #    if chapter in frase:
@@ -520,7 +519,7 @@ if __name__ == '__main__':
                     subprocess.Popen('python /home/alix/Documents/ALIX/ALIX/Expressions/final_movements/happy.py',shell=True, preexec_fn=os.setsid)'''
                     ttsCloud("Vamos aprender inglês.")
                     p.kill()
-                    learning_mode() 
+                    assessment_mode() 
                     #reading_mode()
 
                 if "tchau" in frase:

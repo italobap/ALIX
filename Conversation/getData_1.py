@@ -44,4 +44,14 @@ def getCustoms(i):
     content = f.readlines()
     return content[i][0:content[i].find('/n')]
 
-print(getCustoms(0))
+notfind = True
+resposta = 'saudações'
+for j in range(10):
+    if resposta in getLesson(j):
+        print("deu certo")
+        deucerto = False
+        
+if deucerto:
+    print("deu ruim")
+
+

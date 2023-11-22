@@ -46,7 +46,7 @@ nameLesson = ''
 query = db.collection("CustomQuestionnaire").stream()
 f = open('/home/alix/Documents/ALIX/ALIX/Conversation/Customs', 'w')
 for custom in query:
-    nameLesson = str(lesson.get('name')).lower()
+    nameLesson = str(custom.get('name')).lower()
     #print(f"{lesson.id} => {lesson.to_dict()}")
     print(f"{nameLesson}")
     
@@ -56,12 +56,12 @@ for custom in query:
     
     f=open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{nameLesson}" ,'w', encoding=codificacao)
     
-    questionnaire=custom.get("Questionnaire")
-    for question in questionnaire:
+    customquestionnaire=custom.get("Questionnaire")
+    for question in customquestionnaire:
         questionName = str(question.get('question')).lower()
-        expectedAnswer = str(question.get('expectedAnswer')).lower()
+        expectedAnswer = str(question.get('answer')).lower()
         print(f"{question.get('question')},{question.get('answer')}")
-        with open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{custom.get('name')}" ,'a', encoding=codificacao) as f:
+        with open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{nameLesson}" ,'a', encoding=codificacao) as f:
             f.write(f"{questionName},{expectedAnswer}")
             f.write('\n')
 

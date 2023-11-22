@@ -255,6 +255,11 @@ def addAbsence(timeDate):
     absenceData = {"notified": False, "timeOfOccurence": timeDate}
     db.collection("Absences").add(absenceData)
     print(f"Added Absence")
+
+def addAbsence():
+    absenceData = {"notified": False, "timeOfOccurence": datetime.now()}
+    db.collection("Absences").add(absenceData)
+    print(f"Added Absence")
     
 def addResults(duration, grade, lesson):
     docs = (db.collection("Lesson").where("name", "==", lesson).stream())
@@ -276,8 +281,10 @@ def learning_mode(lock_use, presence_use):
             if frase is not None:
                 if "capítulo" in frase:
                     start_time = time.time()
+                    notfind = True
                     for j in range(10):
                         if getLesson(j).lower() in frase:
+                            notfind = False
                             chapter = getLesson(j).lower()
                             run_expression('happy')
                             ttsCloud("Vamos fazer as atividades de " + chapter)
@@ -289,14 +296,18 @@ def learning_mode(lock_use, presence_use):
                             ttsCloud("Você terminou o capítulo. Muito bem")
                             final_time = time.time()
                             #Tempo gasto na atividade
-                            total_time = final_time - start_time
-                            addResults(total_time, nota, chapter)
-                            print(total_time)
+                            total_time = (final_time - start_time)/60
+                            addResults(int(total_time), nota, chapter)
+                            print(addResults)
                             if lock_use == True:
                                 #run_expression('talking')
                                 ttsCloud("Aperte o botão para abrir o compartimento de recompensas.")
                                 lockable_compartment()
+                            push_button_is_pressed = False
                             break
+                    if notfind:
+                        run_expression('talking')
+                        ttsCloud("Esse capítulo não existe. Olhe no material de estudo para ver os capítulos disponíveis.")
                 if "parar" in frase:
                     run_expression('talking')
                     ttsCloud("Certo, finalizando modo de estudo.")
@@ -322,7 +333,7 @@ def reading_mode(chapter,presence_use):
                 if frase is not None:
                     if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
                         run_expression('happy')
-                        ttsCloud("Certo, finalizando modo de estudo da leitura.")
+                        ttsCloud("Certo, finalizando modo de estudo de leitura.")
                         break
                     else:
                         run_expression('thoughtful')
@@ -416,14 +427,14 @@ def listening_mode(chapter,presence_use):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "sim" in frase:
-                        run_expression('thoughtful')
+                        run_expression('celebrating')
                         ttsCloud("Muito bem. Escute com atenção e divirta-se.")
                         play_music(chapter)
-                        run_expression('thoughtful')
+                        run_expression('happy')
                         ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
                         break
                     if "não" in frase:
-                        run_expression('thoughtful')
+                        run_expression('sad')
                         ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
                         break
                     else:
@@ -775,13 +786,13 @@ def presence_detection():
             # Release the camera and close the OpenCV window
             cam.release()
             cv2.destroyAllWindows()
-            run_expression('thoughtful')
+            run_expression('sad')
             ttsCloud("Não te encontrei, finalizando atividade.")
             #data e hora de ausência
-            timestamp = time.time()
-            date_time = datetime.fromtimestamp(timestamp)
-            str_date_time = date_time.strftime("%d-%m-%Y, %H:%M:%S")
-            addAbsence(str_date_time)
+            #timestamp = time.time()
+            #date_time = datetime.fromtimestamp(timestamp)
+            #str_date_time = date_time.strftime("%d-%m-%Y, %H:%M:%S")
+            addAbsence()
             presence = False
             return presence
 
@@ -888,12 +899,15 @@ if __name__ == '__main__':
                     #run_expression('thoughtful')
                     ttsCloud("Vamos aprender inglês!!!")
                     learning_mode(lock_use, presence_use)
-                    
                 elif "pergunta" in frase:
                     run_expression('thoughtful')
                     ttsCloud("Legal. O que você gostaria de perguntar?")
                     conversation_mode()
-                elif "tchau" in frase:
+                elif "parar" in frase:
+                    run_expression('standby')
+                    ttsCloud("Tchau")
+                    break
+                elif "desligar" in frase:
                     run_expression('thoughtful')
                     ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
                     os.system("sudo shutdown -h now")  

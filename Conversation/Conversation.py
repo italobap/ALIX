@@ -8,7 +8,6 @@ import playsound
 import time
 from time import sleep
 import cv2
-from senha import API_KEY
 import speech_recognition as sr
 import requests
 import json
@@ -20,6 +19,7 @@ limit_input_time = 7
 language="pt-br"
 language_whisper="pt"
 # Set your OpenAI API key
+
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 link = "https://api.openai.com/v1/chat/completions"
 
