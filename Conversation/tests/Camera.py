@@ -4,6 +4,7 @@ face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_front
 
 presence = False
 presence_time = 10
+consecutive_face_count = 0  # Track consecutive face detections
 cam = cv2.VideoCapture(0)
 if not cam.isOpened():
     print("Error: Could not open camera")
@@ -23,11 +24,16 @@ while True:
     print(faces)
 
     if len(faces) > 0:
-            cam.release()
-            cv2.destroyAllWindows()
-            print("Você ainda está aí. Você pode me responder apertando o botão.")
-            presence = True
-            break
+        consecutive_face_count += 1
+    else:
+        consecutive_face_count = 0  # Reset count if no face detected
+
+    if consecutive_face_count >= 5:
+        cam.release()
+        cv2.destroyAllWindows()
+        print("Detected face consistently. You can respond by pressing the button.")
+        presence = True
+        break
  
     # Check if the face detection time has exceeded the limit
     if time.time() - face_time > presence_time:
