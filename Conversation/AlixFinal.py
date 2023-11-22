@@ -22,6 +22,8 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 
 import threading
+from threading import Event
+
 from PIL import Image
 from st7789v.interface import RaspberryPi
 from st7789v import Display
@@ -53,6 +55,7 @@ max_bounce_time = 300
 push_button_is_pressed = False
 presence = False
 address_expression = f"{address_default}DisplayLab/images/"
+event_expression = Event()
 
 #TODO: Tirar o expression_address
 expression_address = f"{address_default}DisplayLab/"
@@ -753,10 +756,12 @@ def GPIO_Init():
         callback=push_button_handler, bouncetime=max_bounce_time)
 
 def presence_detection():
+    stop_thread_expression()
     subprocess.Popen(f"python {address_default}Conversation/baseRotation.py",shell=True, preexec_fn=os.setsid)
     cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         print("Error: Could not open camera")
+        start_thread_expression()
         return
 
     face_time = time.time()
@@ -766,6 +771,7 @@ def presence_detection():
         ret, image = cam.read()
         if not ret:
             print("Error: Could not read frame")
+            start_thread_expression()
             break
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -779,6 +785,8 @@ def presence_detection():
             run_expression('thoughtful')
             ttsCloud("Você ainda está aí. Você pode me responder apertando o botão.")
             presence = True
+            # ainda pode dar problema no lcd, se não tiver completado a rotação
+            start_thread_expression()
             return presence
 
         # Check if the face detection time has exceeded the limit
@@ -794,6 +802,8 @@ def presence_detection():
             #str_date_time = date_time.strftime("%d-%m-%Y, %H:%M:%S")
             addAbsence()
             presence = False
+            # ainda pode dar problema no lcd, se não tiver completado a rotação
+            start_thread_expression()
             return presence
 
 def lockable_compartment():
@@ -820,21 +830,39 @@ def push_button_handler(sig):
     #GPIO.cleanup()
     push_button_is_pressed = True
 
+#----------------------------Thread functions----------------------------
+def start_thread_expression():
+    global event_expression
+    event_expression.clear()
+    thread = threading.Thread(target=thread_expression)
+    thread.daemon = True
+    thread.start()
+
+def stop_thread_expression():
+    global event_expression
+    event_expression.set()
+
 def thread_expression():
     internal_expression = expression
-    with RaspberryPi() as ipr:#rpi:
+    with RaspberryPi() as ipr: #rpi:
         display = Display(ipr)
         display.initialize(color_mode=666)
         while True:
+            if event_expression.is_set():
+                break
+
             for i in range(numero_maximo_imagens):
                 # Se a expressão mudar, reinicia o loop de imagens da pasta
                 if internal_expression != expression:
                     i = 0
                     internal_expression = expression
-                    
+                
                 frame = Image.open(address_expression+expression+'/frame'+str(i)+'.png')
                 data = list(frame.convert('RGB').getdata())
                 display.draw_rgb_bytes(data)
+                if event_expression.is_set():
+                    break
+
                 time.sleep(freq_mudanca_de_imagem)
 
 def pomodoro():
