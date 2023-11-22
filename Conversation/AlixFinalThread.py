@@ -56,6 +56,7 @@ numero_maximo_imagens = 19
 freq_mudanca_de_imagem = 0.1
 event = Event()
 a_time = time.time()
+break_on = False
 
 presence_use = False
 lock_use = False
@@ -314,6 +315,9 @@ def reading_mode(chapter):
     
     while True:
         if push_button_is_pressed():
+            if break_on:
+                continue
+            
             frase = get_transcription_from_whisper("pt")
             if frase is not None:
                 if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
@@ -334,6 +338,9 @@ def listening_mode(chapter):
     
     while True:
         if push_button_is_pressed():
+            if break_on:
+                continue
+
             frase = get_transcription_from_whisper("pt")
             if frase is not None:
                 if "sim" in frase:
@@ -364,7 +371,11 @@ def assessment_mode(chapter):
     
     while True:
         if push_button_is_pressed():
+            if break_on:
+                continue
+
             frase = get_transcription_from_whisper("pt")
+
             if frase is not None:
                 frase_lower = frase.lower()
                 if "sim" in frase_lower:
@@ -561,6 +572,10 @@ def push_button_is_pressed():
     a_time = time.time()
     return internal_push_button_is_pressed
 
+def change_break_status():
+    global break_on
+    break_on = not break_on
+
 def pomodoro():
     print("Pomodoro")
 #----------------------------Thread functions----------------------------
@@ -597,6 +612,8 @@ def thread_time():
                     break
 
         if current_time - spomodoro_time > short_pomodoro:
+                # break_on normalmente é False, mudando para True
+                change_break_status()
                 if(break_count < break_count_limit):
                     print(time.time() - spomodoro_time)
                     print(short_pomodoro)
@@ -615,6 +632,9 @@ def thread_time():
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time()
                     break_count = 0  # Reset the break count after a long break
+
+                # Retornando para break_on para valor padrao
+                change_break_status()
 
 def thread_expression():
     internal_expression = expression
