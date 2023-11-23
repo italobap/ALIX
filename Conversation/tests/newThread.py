@@ -2,10 +2,10 @@ def thread_expression():
     internal_expression = expression
     with RaspberryPi() as ipr:#rpi:
         display = Display(ipr)
-        display.initialize(color_mode=444, bounds=(48,64,192,256))
+        display.initialize(color_mode=444, bounds=(36,48,204,272))
         while True:
             for i in range(numero_maximo_imagens):
-                # Se a expressão mudar, reinicia o loop de imagens da pasta
+                # Se a expressÃ£o mudar, reinicia o loop de imagens da pasta
                 if internal_expression != expression:
                     i = 0
                     internal_expression = expression
