@@ -2,8 +2,17 @@ import cv2
 import time
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades+'haarcascade_frontalface_alt.xml') # insert the full path to haarcascade file if you encounter any problem
 
+
+
+
+
+
 presence = False
 presence_time = 10
+
+
+
+
 consecutive_face_count = 0  # Track consecutive face detections
 cam = cv2.VideoCapture(0)
 if not cam.isOpened():

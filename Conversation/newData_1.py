@@ -24,8 +24,16 @@ def addResults(duration, grade, lesson):
         db.collection("Lesson").document(doc.id).update({"grade":grade})
     print(f"Added Results")
   
-addResults(30, 8.2, "Saudações")
+def addAbsenceOld():
+    absenceData = {"notified": False, "timeOfOccurence": datetime.now()}
+    db.collection("Absences").add(absenceData)
+    print(f"Added Absence")
 
+#addResults(30, 8.2, "Saudações")
+timestamp = time.time()
+date_time = datetime.fromtimestamp(timestamp)
+print(date_time)
+addAbsence(date_time)
 
 
 
