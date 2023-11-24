@@ -45,7 +45,7 @@ magnetic_sensor_pin = 32 #gpio12
 #Times
 record_time = 10 # 10 seconds 
 presence_time = 15 # 15 seconds
-absence_time = 100 #seconds
+absence_time = 50 #seconds
 short_pomodoro = 30 # 20seconds
 
 #Global Variables
@@ -54,6 +54,7 @@ freq_mudanca_de_imagem = 0.1
 max_bounce_time = 400
 push_button_is_pressed = False
 presence = False
+presence_detection_on = False
 address_expression = f"{address_default}DisplayLab/images/"
 event_expression = Event()
 
@@ -62,7 +63,7 @@ expression_address = f"{address_default}DisplayLab/"
 movement_address = f"{address_default}Expressions/final_movements/"
 #processRun = True
 #p = subprocess.Popen('exec ' + expression_address + 'standby', shell=True, preexec_fn=os.setsid)
-expression = 'neutral'
+expression = 'standby'
 
 #Musics
 music_path = f"{address_default}alix songs/"
@@ -296,7 +297,7 @@ def learning_mode(lock_use, presence_use):
                             chapter = getLesson(j).lower()
                             run_expression('happy')
                             ttsCloud("Vamos fazer as atividades de " + chapter)
-                            #reading_mode(chapter,presence_use)
+                            reading_mode(chapter,presence_use)
                             #listening_mode(chapter, presence_use)
                             nota = assessment_mode(chapter,presence_use)
                             print(nota)
@@ -725,7 +726,6 @@ def customlearning():
             run_expression('thoughtful')
             ttsCloud(getQuestion(chapter,i))
             skip_question = False
-            push_button_is_pressed = False
             while True:
                 if push_button_is_pressed:
                     push_button_is_pressed = False
@@ -774,9 +774,6 @@ def customlearning():
                             skip_question = False
                             break
                 
-
-                if outer_break:
-                    break 
     else:
         List = [i for i in range(0, qtde)]
         UpdatedList = random.sample(List, k = 5)
@@ -834,9 +831,6 @@ def customlearning():
                             break
                 
 
-                if outer_break:
-                    break 
-
 #--------------------------Other functions-----------------------------------
 #def run_expression(expressionName, movementName = None):
 #    global processRun
@@ -874,13 +868,25 @@ def GPIO_Init():
         callback=push_button_handler, bouncetime=max_bounce_time)
 
 def presence_detection():
-    stop_thread_expression()
+    global presence_detection_on
+    presence_detection_on = True
+    '''stop_thread_expression()
+    presence = False
+    #with RaspberryPi() as ipr:#rpi:
+    display = Display(ipr)
+    display.initialize(color_mode=444)
+    frame = Image.open(address_expression+'preto'+'/preto'+'.png')
+    data = list(frame.convert('RGB').getdata())
+    display.draw_rgb_bytes(data)
+    display.initialize(color_mode=444, bounds=(24,32,216,288))
+    frame = Image.open(address_expression+'standby'+'/frame0'+'.png')
+    data = list(frame.convert('RGB').getdata())
+    display.draw_rgb_bytes(data)'''
     subprocess.Popen(f"python {address_default}Conversation/baseRotation.py",shell=True, preexec_fn=os.setsid)
     consecutive_face_count = 0  # Track consecutive face detections
     cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         print("Error: Could not open camera")
-        start_thread_expression()
         return
 
     face_time = time.time()
@@ -890,7 +896,6 @@ def presence_detection():
         ret, image = cam.read()
         if not ret:
             print("Error: Could not read frame")
-            start_thread_expression()
             break
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -908,9 +913,8 @@ def presence_detection():
             run_expression('thoughtful')
             ttsCloud("Você ainda está aí. Você pode me responder apertando o botão.")
             presence = True
-            # ainda pode dar problema no lcd, se não tiver completado a rotação
-            start_thread_expression()
-            return presence
+        
+            break
 
         # Check if the face detection time has exceeded the limit
         if time.time() - face_time > presence_time:
@@ -924,10 +928,12 @@ def presence_detection():
             date_time = datetime.fromtimestamp(timestamp)
             addAbsence(date_time)
             presence = False
-            # ainda pode dar problema no lcd, se não tiver completado a rotação
-            start_thread_expression()
-            return presence
+            
+            break
 
+    #start_thread_expression()
+    presence_detection_on = False
+    return presence
 def lockable_compartment():
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -945,7 +951,7 @@ def lockable_compartment():
         print("Trava aberta")
 
     run_expression('thoughtful')
-    ttsCloud("Compartimento de segurança fechado com sucesso.")
+    ttsCloud("Compartimento de recompensas fechado com sucesso.")
 
 def push_button_handler(sig):
     global push_button_is_pressed
@@ -966,25 +972,26 @@ def stop_thread_expression():
 
 def thread_expression():
     internal_expression = expression
-    with RaspberryPi() as ipr: #rpi:
+    with RaspberryPi() as ipr:#rpi:
         display = Display(ipr)
-        display.initialize(color_mode=666)
+        display.initialize(color_mode=444)
+        frame = Image.open(address_expression+'preto'+'/preto'+'.png')
+        data = list(frame.convert('RGB').getdata())
+        display.draw_rgb_bytes(data)
+        display.initialize(color_mode=444, bounds=(24,32,216,288))
         while True:
-            if event_expression.is_set():
-                break
-
+            
             for i in range(numero_maximo_imagens):
-                # Se a expressão mudar, reinicia o loop de imagens da pasta
+                if presence_detection_on:
+                    continue
+                # Se a expressÃ£o mudar, reinicia o loop de imagens da pasta
                 if internal_expression != expression:
                     i = 0
                     internal_expression = expression
-                
+                    
                 frame = Image.open(address_expression+expression+'/frame'+str(i)+'.png')
                 data = list(frame.convert('RGB').getdata())
                 display.draw_rgb_bytes(data)
-                if event_expression.is_set():
-                    break
-
                 time.sleep(freq_mudanca_de_imagem)
 
 #----------------------------Main function----------------------------
@@ -1001,7 +1008,7 @@ if __name__ == '__main__':
                 if "estudar" in frase:
                     run_expression('thoughtful')
                     ttsCloud("Certo. Precisamos realizar umas configurações antes de iniciar as atividades.")
-                    run_expression('thoughtful')
+                    run_expression('sad')
                     ttsCloud("Você vai utilizar o compartimento de recompensas?")
                     push_button_is_pressed = False
                     while True:
@@ -1017,7 +1024,7 @@ if __name__ == '__main__':
                                     ttsCloud("Compartimento de recompensas ativado.")
                                     break
                                 if "não" in frase:
-                                    run_expression('thoughtful')
+                                    run_expression('celebrating')
                                     ttsCloud("Ok. Compartimento de recompensas desativado.")
                                     lock_use = False
                                     break
@@ -1025,7 +1032,7 @@ if __name__ == '__main__':
                                     run_expression('thoughtful')
                                     ttsCloud("Não entendi. Me responda se você quer usar o compartimento de recompensas com Sim ou Não.")
                                     
-                    run_expression('thoughtful')
+                    run_expression('talking')
                     ttsCloud("Você gostaria de usar a camera para detecção de presença durante as atividades?")
                     while True:
                         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -1037,20 +1044,26 @@ if __name__ == '__main__':
                                     ttsCloud("Ok, detecção de presença ativado.")
                                     break
                                 if "não" in frase:
-                                    run_expression('thoughtful')
-                                    ttsCloud("Tudo bem, não irei utilizar a detecção de presença durante a atividade.")
+                                    run_expression('happy')
+                                    ttsCloud("Não entendi. Me responda se você quer usar a detecção de presença com Sim ou Não.")
                                     presence_use = False
                                     break
                                 else:
                                     run_expression('thoughtful')
                                     ttsCloud("Não é uma opção, diga sim ou não")
-                    #run_expression('thoughtful')
+                    run_expression('celebrating')
                     ttsCloud("Vamos aprender inglês!!!")
+                    #presence_use = True
+                    #lock_use = False
                     learning_mode(lock_use, presence_use)
                 elif "pergunta" in frase:
                     run_expression('thoughtful')
                     ttsCloud("Legal. O que você gostaria de perguntar?")
                     conversation_mode()
+                elif "customizadas" in frase:
+                    run_expression('thoughtful')
+                    ttsCloud("Legal. Vamos fazer as questões customizadas.")
+                    customlearning() 
                 elif "parar" in frase:
                     run_expression('standby')
                     ttsCloud("Tchau")

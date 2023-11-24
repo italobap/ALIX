@@ -574,8 +574,9 @@ def push_button_is_pressed():
 
 def change_break_status():
     global break_on
+    printf(f" before {break_on}")
     break_on = not break_on
-
+    printf(f"after {break_on}")
 def pomodoro():
     print("Pomodoro")
 #----------------------------Thread functions----------------------------
