@@ -2,6 +2,7 @@ import time
 from time import sleep
 import threading
 from threading import Event
+import keyboard
 
 #Times
 record_time = 10 # 10 seconds 
@@ -68,19 +69,21 @@ def start_thread():
 
 def learning_mode():
     global event
-    print("Qual capítulo você gostaria de aprender?")
     start_thread()
-    print("learning_mode")
-    sleep(10)
-    event.set()
+    while True:
+        if keyboard.read_key() == "r":
+            print("Qual capítulo você gostaria de aprender?")
+            sleep(10)
+            # print("Parando Thread")
+            event.set()
 
-    sleep(10)
-    event.clear()
-    print("learning_mode")
+            # sleep(10)
+            event.clear()
+            print("Reiniciando")
 
-    start_thread()
-    sleep(10)
-    event.set()
+            start_thread()
+            # sleep(10)
+            # event.set()
 
 if __name__ == '__main__':
     # create and configure a new thread

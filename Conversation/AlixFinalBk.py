@@ -47,37 +47,23 @@ record_time = 10 # 10 seconds
 presence_time = 15 # 15 seconds
 absence_time = 50 #seconds
 short_pomodoro = 30 # 20seconds
-break_count_limit = 4
 
 #Global Variables
 numero_maximo_imagens = 19
 freq_mudanca_de_imagem = 0.1
 max_bounce_time = 400
 push_button_is_pressed = False
+presence = False
 presence_detection_on = False
 address_expression = f"{address_default}DisplayLab/images/"
 event_expression = Event()
 
-presence = False
-presence_use = False
-lock_use = False
-
-# Display bounds
-minY = 24
-minX = 32
-maxY = 216
-maxX = 288
-
-# Expressoes
-happy = 'happy'
-sad = 'sad'
-celebrating = 'celebrating'
-standby = 'standby'
-talking = 'talking'
-thoughtful = 'thoughtful'
-
+#TODO: Tirar o expression_address
+expression_address = f"{address_default}DisplayLab/"
 movement_address = f"{address_default}Expressions/final_movements/"
-expression = standby
+#processRun = True
+#p = subprocess.Popen('exec ' + expression_address + 'standby', shell=True, preexec_fn=os.setsid)
+expression = 'standby'
 
 #Musics
 music_path = f"{address_default}alix songs/"
@@ -170,7 +156,7 @@ def get_transcription_from_whisper(language_whisper):
             # Check if it has been more than 10 seconds without speech
             if current_time - detection_time >= record_time:
                 print("No speech detected within the last 10 seconds. Stopping recording.")
-                run_expression(thoughtful)
+                run_expression('thoughtful')
                 ttsCloud("Não escutei o que você falou. Aperte o botão de novo para falar comigo.")
                 break
 
@@ -292,9 +278,9 @@ def addResults(duration, grade, lesson):
     print(f"Added Results")
  
 #-----------------------Functions of learning mode---------------------------
-def learning_mode():
+def learning_mode(lock_use, presence_use):
     global push_button_is_pressed
-    run_expression(thoughtful)
+    run_expression('thoughtful')
     ttsCloud("Qual capítulo você gostaria de aprender?")
     push_button_is_pressed = False
     while True:
@@ -309,13 +295,13 @@ def learning_mode():
                         if getLesson(j).lower() in frase:
                             notfind = False
                             chapter = getLesson(j).lower()
-                            run_expression(happy)
+                            run_expression('happy')
                             ttsCloud("Vamos fazer as atividades de " + chapter)
-                            reading_mode(chapter)
-                            #listening_mode(chapter)
-                            nota = assessment_mode(chapter)
+                            reading_mode(chapter,presence_use)
+                            #listening_mode(chapter, presence_use)
+                            nota = assessment_mode(chapter,presence_use)
                             print(nota)
-                            run_expression(happy)
+                            run_expression('happy')
                             ttsCloud("Você terminou o capítulo. Muito bem")
                             final_time = time.time()
                             #Tempo gasto na atividade
@@ -323,27 +309,27 @@ def learning_mode():
                             addResults(int(total_time), nota, chapter)
                             print(addResults)
                             if lock_use == True:
-                                #run_expression(talking)
+                                #run_expression('talking')
                                 ttsCloud("Aperte o botão para abrir o compartimento de recompensas.")
                                 lockable_compartment()
                             push_button_is_pressed = False
                             break
                     if notfind:
-                        run_expression(talking)
+                        run_expression('talking')
                         ttsCloud("Esse capítulo não existe. Olhe no material de estudo para ver os capítulos disponíveis.")
                 if "parar" in frase:
-                    run_expression(talking)
+                    run_expression('talking')
                     ttsCloud("Certo, finalizando modo de estudo.")
                     break
 
-def reading_mode(chapter):
+def reading_mode(chapter,presence_use):
     global push_button_is_pressed
     if presence_use == True:
         break_count = 0
         current_time = time.time()
         a_time = current_time
         spomodoro_time = current_time
-        run_expression(thoughtful)
+        run_expression('thoughtful')
         ttsCloud("Você já pode iniciar  a leitura do capítulo de " + chapter)
         ttsCloud("Ao terminar de ler o capítulo, lembre-se de me avisar.")
         push_button_is_pressed = False
@@ -355,16 +341,16 @@ def reading_mode(chapter):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
-                        run_expression(happy)
+                        run_expression('happy')
                         ttsCloud("Certo, finalizando modo de estudo de leitura.")
                         break
                     else:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Não entendi o que você disse. Você já terminou a leitura?")
                     
             if current_time - a_time > absence_time:
                 print(time.time() - a_time)
-                run_expression(thoughtful)
+                run_expression('thoughtful')
                 ttsCloud("Será que você ainda está ai? Vou te procurar.")
                 presence = presence_detection()
                 if presence == True:
@@ -373,21 +359,21 @@ def reading_mode(chapter):
                     break
             
             if current_time - spomodoro_time > short_pomodoro:
-                if(break_count < break_count_limit):
+                if(break_count < 4):
                     print(time.time() - spomodoro_time)
                     print(short_pomodoro)
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Está na hora da sua pausa de 5 minutos.")
                     sleep(5)
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time() 
                     break_count += 1
                 else:
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Está na hora da sua pausa de 15 minutos.")
                     sleep(10)
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time()
                     break_count = 0  # Reset the break count after a long break
@@ -397,7 +383,7 @@ def reading_mode(chapter):
         current_time = time.time()
         a_time = current_time 
         spomodoro_time = current_time
-        run_expression(thoughtful)
+        run_expression('thoughtful')
         ttsCloud("Você já pode iniciar  a leitura do caítulo" + chapter)
         ttsCloud("Lembre que ao finalizar a leitura do capítulo, me avise apertando o botão.")
         while True:
@@ -407,36 +393,36 @@ def reading_mode(chapter):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "terminei" in frase or "acabei" in frase or "sim" in frase or "finalizei" in frase:
-                        run_expression(happy)
+                        run_expression('happy')
                         ttsCloud("Certo, finalizando modo de estudo da leitura.")
                         break
                     else:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Não entendi o que você disse. Você já terminou a leitura?")
             
             if current_time - spomodoro_time > short_pomodoro:
-                if(break_count < break_count_limit):
+                if(break_count < 4):
                     print(time.time() - spomodoro_time)
                     print(short_pomodoro)
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Está na hora da sua pausa de 5 minutos.")
                     sleep(5)
-                    run_expression(happy)
+                    run_expression('happy')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time() 
                     break_count += 1
                 else:
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Está na hora da sua pausa de 15 minutos.")
                     sleep(10)
-                    run_expression(happy)
+                    run_expression('happy')
                     ttsCloud("Pausa finalizada. Está na hora de voltar")
                     spomodoro_time = time.time()
                     break_count = 0  # Reset the break count after a long break
 
-def listening_mode(chapter):
+def listening_mode(chapter,presence_use):
     global push_button_is_pressed
-    run_expression(thoughtful)
+    run_expression('thoughtful')
     ttsCloud("Vamos praticar a atividade de escuta do capítulo de ?" + chapter)
     current_time = time.time()
     a_time = current_time
@@ -450,24 +436,24 @@ def listening_mode(chapter):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "sim" in frase:
-                        run_expression(celebrating)
+                        run_expression('celebrating')
                         ttsCloud("Muito bem. Escute com atenção e divirta-se.")
                         play_music(chapter)
-                        run_expression(happy)
+                        run_expression('happy')
                         ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
                         break
                     if "não" in frase:
-                        run_expression(sad)
+                        run_expression('sad')
                         ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
                         break
                     else:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de escuta.")
                         break
             
             if current_time - a_time > absence_time:
                 print(time.time() - a_time)
-                run_expression(thoughtful)
+                run_expression('thoughtful')
                 ttsCloud("Será que você ainda está aí? Vou te procurar.")
                 presence = presence_detection()
                 if presence == True:
@@ -482,25 +468,25 @@ def listening_mode(chapter):
                 frase = get_transcription_from_whisper("pt")
                 if frase is not None:
                     if "sim" in frase:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Muito bem. Escute com atenção e divirta-se.")
                         play_music(chapter)
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Espero que você tenha aprendido a pronunciar muitas palavras novas. Escute quantas vezes você quiser.")
                         break
                     if "não" in frase:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
                         break
                     else:
-                        run_expression(thoughtful)
+                        run_expression('thoughtful')
                         ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de escuta.")
                         break
 
 #adjectives primeira pergunta tá errada
-def assessment_mode(chapter):
+def assessment_mode(chapter,presence_use):
     global push_button_is_pressed
-    run_expression(thoughtful)
+    run_expression('thoughtful')
     ttsCloud("Vamos praticar a avaliação do capítulo de " + chapter + "?")
     outer_break = False
     break_count = 0
@@ -517,12 +503,12 @@ def assessment_mode(chapter):
                 frase_lower = frase.lower()
                 if "sim" in frase_lower:
                     if presence_use == True:
-                        #run_expression(thoughtful)
+                        #run_expression('thoughtful')
                         ttsCloud("Vamos começar.")
                         error_count = 0
                         nota = 0 
                         for i in range(getRangeLesson(chapter)):
-                            run_expression(thoughtful)
+                            run_expression('thoughtful')
                             ttsCloud(getQuestion(chapter,i))
                             skip_question = False
                             push_button_is_pressed = False
@@ -535,13 +521,13 @@ def assessment_mode(chapter):
                                     if frase is not None:
                                         if getAnswer(chapter, i) in frase:
                                             if(i < ((getRangeLesson(chapter))-1)):
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Acertou, vamos para a próxima pergunta")
                                                 error_count = 0
                                                 nota += 1
                                                 break
                                             else:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Você finalizou a atividade. Parabéns")
                                                 nota += 1
                                                 #nota
@@ -549,12 +535,12 @@ def assessment_mode(chapter):
                                                 outer_break = True
                                                 return media
                                         else:
-                                            run_expression(thoughtful)
+                                            run_expression('thoughtful')
                                             ttsCloud("Está errado tente outra vez")
                                             push_button_is_pressed = False
                                             error_count += 1
                                             if error_count >=3:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                                 push_button_is_pressed = False
                                                 while True:
@@ -564,17 +550,17 @@ def assessment_mode(chapter):
                                                         frase = get_transcription_from_whisper("pt")
                                                         if frase is not None:
                                                             if "sim" in frase:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud("Tudo bem, vamos para a próxima pergunta")
                                                                 error_count = 0
                                                                 skip_question = True
                                                                 break
                                                             if "não" in frase:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud(getQuestion(chapter,i))
                                                                 break
                                                             else:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
                                         if skip_question:
                                             skip_question = False
@@ -582,7 +568,7 @@ def assessment_mode(chapter):
                                 
                                 if current_time - a_time > absence_time:
                                     print(time.time() - a_time)
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Será que você ainda está ai? Vou te procurar.")
                                     presence = presence_detection()
                                     if presence == True:
@@ -590,21 +576,21 @@ def assessment_mode(chapter):
                                     elif presence == False:
                                         break 
                                 if current_time - spomodoro_time > short_pomodoro:
-                                    if(break_count < break_count_limit):
+                                    if(break_count < 4):
                                         print(time.time() - spomodoro_time)
                                         print(short_pomodoro)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Está na hora da sua pausa de 5 minutos.")
                                         sleep(5)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Pausa finalizada. Está na hora de voltar")
                                         spomodoro_time = time.time() 
                                         break_count += 1
                                     else:
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Está na hora da sua pausa de 15 minutos.")
                                         sleep(10)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Pausa finalizada. Está na hora de voltar")
                                         spomodoro_time = time.time()
                                         break_count = 0  # Reset the break count after a long break
@@ -613,12 +599,12 @@ def assessment_mode(chapter):
                                     break 
                     
                     elif presence_use == False:
-                        #run_expression(thoughtful)
+                        #run_expression('thoughtful')
                         ttsCloud("Vamos começar.")
                         error_count = 0
                         nota = 0 
                         for i in range(getRangeLesson(chapter)):
-                            run_expression(thoughtful)
+                            run_expression('thoughtful')
                             ttsCloud(getQuestion(chapter,i))
                             skip_question = False
                             push_button_is_pressed = False
@@ -630,13 +616,13 @@ def assessment_mode(chapter):
                                     if frase is not None:
                                         if getAnswer(chapter, i).lower() in frase:
                                             if(i < ((getRangeLesson(chapter))-1)):
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Acertou, vamos para a próxima pergunta")
                                                 error_count = 0
                                                 nota += 1
                                                 break
                                             else:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Você finalizou a atividade. Parabéns")
                                                 nota += 1
                                                 #nota
@@ -644,11 +630,11 @@ def assessment_mode(chapter):
                                                 outer_break = True
                                                 return media
                                         else:
-                                            run_expression(thoughtful)
+                                            run_expression('thoughtful')
                                             ttsCloud("Está errado tente outra vez")
                                             error_count += 1
                                             if error_count >=3:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                                 push_button_is_pressed = False
                                                 while True:
@@ -657,38 +643,38 @@ def assessment_mode(chapter):
                                                         frase = get_transcription_from_whisper("pt")
                                                         if frase is not None:
                                                             if "sim" in frase:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud("Tudo bem, vamos para a próxima pergunta")
                                                                 error_count = 0
                                                                 skip_question = True
                                                                 break
                                                             if "não" in frase:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud(getQuestion(chapter,i))
                                                                 break
                                                             else:
-                                                                run_expression(thoughtful)
+                                                                run_expression('thoughtful')
                                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
                                         if skip_question:
                                             skip_question = False
                                             break
                                 
                                 if current_time - spomodoro_time > short_pomodoro:
-                                    if(break_count < break_count_limit):
+                                    if(break_count < 4):
                                         print(time.time() - spomodoro_time)
                                         print(short_pomodoro)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Está na hora da sua pausa de 5 minutos.")
                                         sleep(5)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Pausa finalizada. Está na hora de voltar")
                                         spomodoro_time = time.time() 
                                         break_count += 1
                                     else:
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Está na hora da sua pausa de 15 minutos.")
                                         sleep(10)
-                                        run_expression(thoughtful)
+                                        run_expression('thoughtful')
                                         ttsCloud("Pausa finalizada. Está na hora de voltar")
                                         spomodoro_time = time.time()
                                         break_count = 0  # Reset the break count after a long break
@@ -697,11 +683,11 @@ def assessment_mode(chapter):
                                     break 
 
                 elif "não" in frase:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Certo, finalizando modo de estudo.")
                     break
                 else:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de avaliação.")
         if outer_break:
             break  # This break will exit the outer while loop
@@ -722,12 +708,12 @@ def conversation_mode():
         if GPIO.input(push_button_pin) == GPIO.LOW:
             frase = get_transcription_from_whisper("pt")
             if "parar" in frase:
-                run_expression(happy, standby)
+                run_expression('happy', 'standby')
                 ttsCloud("Certo, finalizando modo conversa.")
                 sleep(1)
                 continue_conversation = False
             else:
-                run_expression(thoughtful)
+                run_expression('thoughtful')
                 conversation =generate_response(frase)
                 ttsCloud(conversation)
 
@@ -737,7 +723,7 @@ def customlearning():
     qtde = getRangeCustom(chapter)
     if qtde <= 5:
         for i in range (qtde):
-            run_expression(thoughtful)
+            run_expression('thoughtful')
             ttsCloud(getQuestion(chapter,i))
             skip_question = False
             while True:
@@ -747,23 +733,23 @@ def customlearning():
                     if frase is not None:
                         if getAnswer(chapter, i) in frase:
                             if(i < ((getRangeCustom(chapter))-1)):
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Acertou, vamos para a próxima pergunta")
                                 error_count = 0
                                 nota += 1
                                 break
                             else:
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Você finalizou a atividade. Parabéns")
                                 outer_break = True
                                 break
                         else:
-                            run_expression(thoughtful)
+                            run_expression('thoughtful')
                             ttsCloud("Está errado tente outra vez")
                             push_button_is_pressed = False
                             error_count += 1
                             if error_count >=3:
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                 push_button_is_pressed = False
                                 while True:
@@ -772,17 +758,17 @@ def customlearning():
                                         frase = get_transcription_from_whisper("pt")
                                         if frase is not None:
                                             if "sim" in frase:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Tudo bem, vamos para a próxima pergunta")
                                                 error_count = 0
                                                 skip_question = True
                                                 break
                                             if "não" in frase:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud(getQuestion(chapter,i))
                                                 break
                                             else:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
                         if skip_question:
                             skip_question = False
@@ -792,7 +778,7 @@ def customlearning():
         List = [i for i in range(0, qtde)]
         UpdatedList = random.sample(List, k = 5)
         for j in UpdatedList:
-            run_expression(thoughtful)
+            run_expression('thoughtful')
             ttsCloud(getQuestion(chapter,j))
             skip_question = False
             push_button_is_pressed = False
@@ -803,23 +789,23 @@ def customlearning():
                     if frase is not None:
                         if getAnswer(chapter, j) in frase:
                             if(j < ((getRangeCustom(chapter))-1)):
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Acertou, vamos para a próxima pergunta")
                                 error_count = 0
                                 nota += 1
                                 break
                             else:
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Você finalizou a atividade. Parabéns")
                                 outer_break = True
                                 break
                         else:
-                            run_expression(thoughtful)
+                            run_expression('thoughtful')
                             ttsCloud("Está errado tente outra vez")
                             push_button_is_pressed = False
                             error_count += 1
                             if error_count >=3:
-                                run_expression(thoughtful)
+                                run_expression('thoughtful')
                                 ttsCloud("Parece que você está com dificuldades. Gostaria de pular essa questão?")
                                 push_button_is_pressed = False
                                 while True:
@@ -828,17 +814,17 @@ def customlearning():
                                         frase = get_transcription_from_whisper("pt")
                                         if frase is not None:
                                             if "sim" in frase:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Tudo bem, vamos para a próxima pergunta")
                                                 error_count = 0
                                                 skip_question = True
                                                 break
                                             if "não" in frase:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud(getQuestion(chapter,i))
                                                 break
                                             else:
-                                                run_expression(thoughtful)
+                                                run_expression('thoughtful')
                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
                         if skip_question:
                             skip_question = False
@@ -846,6 +832,21 @@ def customlearning():
                 
 
 #--------------------------Other functions-----------------------------------
+#def run_expression(expressionName, movementName = None):
+#    global processRun
+#    global p
+
+#    if not movementName:
+#        movementName = expressionName
+
+#    executando = 'exec ' + expression_address + expressionName
+#    if processRun:
+#        p.kill()
+        
+#    p=subprocess.Popen(executando, shell=True, preexec_fn=os.setsid)
+#    processRun = True
+#    subprocess.Popen('python ' + movement_address + movementName + '.py',shell=True, preexec_fn=os.setsid)
+
 def run_expression(expressionName, movementName = None):
     global expression
 
@@ -868,15 +869,24 @@ def GPIO_Init():
 
 def presence_detection():
     global presence_detection_on
-    global presence
     presence_detection_on = True
-    
+    '''stop_thread_expression()
+    presence = False
+    #with RaspberryPi() as ipr:#rpi:
+    display = Display(ipr)
+    display.initialize(color_mode=444)
+    frame = Image.open(address_expression+'preto'+'/preto'+'.png')
+    data = list(frame.convert('RGB').getdata())
+    display.draw_rgb_bytes(data)
+    display.initialize(color_mode=444, bounds=(24,32,216,288))
+    frame = Image.open(address_expression+'standby'+'/frame0'+'.png')
+    data = list(frame.convert('RGB').getdata())
+    display.draw_rgb_bytes(data)'''
     subprocess.Popen(f"python {address_default}Conversation/baseRotation.py",shell=True, preexec_fn=os.setsid)
     consecutive_face_count = 0  # Track consecutive face detections
     cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         print("Error: Could not open camera")
-        presence_detection_on = False
         return
 
     face_time = time.time()
@@ -900,9 +910,10 @@ def presence_detection():
         if consecutive_face_count >= 5:
             cam.release()
             cv2.destroyAllWindows()
-            run_expression(thoughtful)
+            run_expression('thoughtful')
             ttsCloud("Você ainda está aí. Você pode me responder apertando o botão.")
             presence = True
+        
             break
 
         # Check if the face detection time has exceeded the limit
@@ -910,19 +921,19 @@ def presence_detection():
             # Release the camera and close the OpenCV window
             cam.release()
             cv2.destroyAllWindows()
-            run_expression(sad)
+            run_expression('sad')
             ttsCloud("Não te encontrei, finalizando atividade.")
             #data e hora de ausência
             timestamp = time.time()
             date_time = datetime.fromtimestamp(timestamp)
             addAbsence(date_time)
             presence = False
+            
             break
 
     #start_thread_expression()
     presence_detection_on = False
     return presence
-
 def lockable_compartment():
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -939,7 +950,7 @@ def lockable_compartment():
     while (GPIO.input(magnetic_sensor_pin) == GPIO.HIGH):
         print("Trava aberta")
 
-    run_expression(thoughtful)
+    run_expression('thoughtful')
     ttsCloud("Compartimento de recompensas fechado com sucesso.")
 
 def push_button_handler(sig):
@@ -967,12 +978,13 @@ def thread_expression():
         frame = Image.open(address_expression+'preto'+'/preto'+'.png')
         data = list(frame.convert('RGB').getdata())
         display.draw_rgb_bytes(data)
-        display.initialize(color_mode=444, bounds=(minY,minX,maxY,maxX))
+        display.initialize(color_mode=444, bounds=(24,32,216,288))
         while True:
+            
             for i in range(numero_maximo_imagens):
                 if presence_detection_on:
                     continue
-                # Se a expressao mudar, reinicia o loop de imagens da pasta
+                # Se a expressÃ£o mudar, reinicia o loop de imagens da pasta
                 if internal_expression != expression:
                     i = 0
                     internal_expression = expression
@@ -994,9 +1006,9 @@ if __name__ == '__main__':
             frase = get_transcription_from_whisper("pt")
             if frase is not None:
                 if "estudar" in frase:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Certo. Precisamos realizar umas configurações antes de iniciar as atividades.")
-                    run_expression(sad)
+                    run_expression('sad')
                     ttsCloud("Você vai utilizar o compartimento de recompensas?")
                     push_button_is_pressed = False
                     while True:
@@ -1004,23 +1016,23 @@ if __name__ == '__main__':
                             frase = get_transcription_from_whisper("pt")
                             if frase is not None:
                                 if "sim" in frase:
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Certo. Aperte o botão para destravar o compartimento e abra a porta")
                                     lockable_compartment()
                                     lock_use = True
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Compartimento de recompensas ativado.")
                                     break
                                 if "não" in frase:
-                                    run_expression(celebrating)
+                                    run_expression('celebrating')
                                     ttsCloud("Ok. Compartimento de recompensas desativado.")
                                     lock_use = False
                                     break
                                 else:
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Não entendi. Me responda se você quer usar o compartimento de recompensas com Sim ou Não.")
                                     
-                    run_expression(talking)
+                    run_expression('talking')
                     ttsCloud("Você gostaria de usar a camera para detecção de presença durante as atividades?")
                     while True:
                         if GPIO.input(push_button_pin) == GPIO.LOW:
@@ -1028,40 +1040,40 @@ if __name__ == '__main__':
                             if frase is not None:
                                 if "sim" in frase:
                                     presence_use = True
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Ok, detecção de presença ativado.")
                                     break
                                 if "não" in frase:
-                                    run_expression(happy)
+                                    run_expression('happy')
                                     ttsCloud("Não entendi. Me responda se você quer usar a detecção de presença com Sim ou Não.")
                                     presence_use = False
                                     break
                                 else:
-                                    run_expression(thoughtful)
+                                    run_expression('thoughtful')
                                     ttsCloud("Não é uma opção, diga sim ou não")
-                    run_expression(celebrating)
+                    run_expression('celebrating')
                     ttsCloud("Vamos aprender inglês!!!")
                     #presence_use = True
                     #lock_use = False
-                    learning_mode()
+                    learning_mode(lock_use, presence_use)
                 elif "pergunta" in frase:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Legal. O que você gostaria de perguntar?")
                     conversation_mode()
                 elif "customizadas" in frase:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Legal. Vamos fazer as questões customizadas.")
                     customlearning() 
                 elif "parar" in frase:
-                    run_expression(standby)
+                    run_expression('standby')
                     ttsCloud("Tchau")
                     break
                 elif "desligar" in frase:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
                     os.system("sudo shutdown -h now")  
                 else:
-                    run_expression(thoughtful)
+                    run_expression('thoughtful')
                     ttsCloud("Não entendi o que você falou. ")
 
 
