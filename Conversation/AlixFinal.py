@@ -342,13 +342,13 @@ def learning_mode(presence_use,lock_use):
                             nota = assessment_mode(chapter)
                             print(nota)
                             run_expression(happy,celebrating)
-                            ttsCloud("Você terminou o capítulo. Muito bem")
+                            ttsCloud("Você chegou ao final do capítulo.")
                             final_time = time.time()
                             #Tempo gasto na atividade
                             total_time = (final_time - start_time)/60
                             addResults(int(total_time), nota, chapter)
                             print(addResults)
-                            if lock_use == True:
+                            if nota > 0 and lock_use == True:
                                 run_expression(talking)
                                 ttsCloud("Aperte o botão para abrir o compartimento de recompensas.")
                                 lockable_compartment()
@@ -357,10 +357,14 @@ def learning_mode(presence_use,lock_use):
                     if notfind:
                         run_expression(thoughtful)
                         ttsCloud("Esse capítulo não existe. Olhe no material de estudo para ver os capítulos disponíveis.")               
-                elif "parar" in frase:
+                elif "parar" in frase or "para" in frase:
                     run_expression(standby)
                     ttsCloud("Certo, finalizando modo de estudo.")
                     break
+                elif "desligar" in frase or "desliga" in frase:
+                    run_expression(standby)
+                    ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                    os.system("sudo shutdown -h now")  
                 else:
                     run_expression(thoughtful)
                     ttsCloud("Não entendi o que você disse. Olhe no material de estudo para ver os capítulos disponíveis.")
@@ -390,6 +394,10 @@ def reading_mode(chapter):
                     elif "ainda" in frase or "lendo" in frase:
                         run_expression(standby)
                         ttsCloud("Tudo bem. Quando terminar de ler, lembre de me avisar.")
+                    elif "desligar" in frase or "desliga" in frase:
+                        run_expression(standby)
+                        ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                        os.system("sudo shutdown -h now")  
                     else:
                         run_expression(thoughtful)
                         ttsCloud("Não entendi o que você disse. Você já terminou a leitura?")
@@ -445,6 +453,10 @@ def reading_mode(chapter):
                     elif "ainda" in frase or "lendo" in frase:
                         run_expression(standby)
                         ttsCloud("Tudo bem. Quando terminar de ler, lembre de me avisar.")
+                    elif "desligar" in frase or "desliga" in frase:
+                        run_expression(standby)
+                        ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                        os.system("sudo shutdown -h now")  
                     else:
                         run_expression(thoughtful)
                         ttsCloud("Não entendi o que você disse. Você já terminou a leitura?")
@@ -495,6 +507,10 @@ def listening_mode(chapter):
                         run_expression(talking)
                         ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
                         break
+                    if "desligar" in frase or "desliga" in frase:
+                        run_expression(standby)
+                        ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                        os.system("sudo shutdown -h now")  
                     else:
                         run_expression(thoughtful)
                         ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de escuta.")
@@ -527,6 +543,10 @@ def listening_mode(chapter):
                         run_expression(talking)
                         ttsCloud("Tudo bem, vamos para a atividade de avaliação.")
                         break
+                    if "desligar" in frase or "desliga" in frase:
+                        run_expression(standby)
+                        ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                        os.system("sudo shutdown -h now")  
                     else:
                         run_expression(thoughtful)
                         ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de escuta.")
@@ -581,8 +601,13 @@ def assessment_mode(chapter):
                                                 nota += 1
                                                 #nota
                                                 media = (nota/getRangeLesson(chapter)) * 10
+                                                mediafinal = round(media, 2)
                                                 outer_break = True
-                                                return media
+                                                return mediafinal
+                                        elif "turn off" in frase:
+                                            run_expression(standby)
+                                            ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                            os.system("sudo shutdown -h now")  
                                         else:
                                             run_expression(sad)
                                             ttsCloud("Está errado tente outra vez")
@@ -608,6 +633,10 @@ def assessment_mode(chapter):
                                                                 run_expression(thoughtful)
                                                                 ttsCloud(getQuestion(chapter,i))
                                                                 break
+                                                            if "desligar" in frase or "desliga" in frase:
+                                                                run_expression(standby)
+                                                                ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                                                os.system("sudo shutdown -h now") 
                                                             else:
                                                                 run_expression(thoughtful)
                                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
@@ -676,8 +705,13 @@ def assessment_mode(chapter):
                                                 nota += 1
                                                 #nota
                                                 media = (nota/getRangeLesson(chapter)) * 10
+                                                mediafinal = round(media, 2)
                                                 outer_break = True
-                                                return media
+                                                return mediafinal
+                                        elif "turn off" in frase:
+                                            run_expression(standby)
+                                            ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                            os.system("sudo shutdown -h now")  
                                         else:
                                             run_expression(sad)
                                             ttsCloud("Está errado tente outra vez")
@@ -701,6 +735,10 @@ def assessment_mode(chapter):
                                                                 run_expression(thoughtful)
                                                                 ttsCloud(getQuestion(chapter,i))
                                                                 break
+                                                            if "desligar" in frase or "desliga" in frase:
+                                                                run_expression(standby)
+                                                                ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                                                os.system("sudo shutdown -h now") 
                                                             else:
                                                                 run_expression(thoughtful)
                                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
@@ -732,9 +770,14 @@ def assessment_mode(chapter):
                                     break 
 
                 elif "não" in frase:
+                    nota = 0 
                     run_expression(talking)
                     ttsCloud("Certo, finalizando modo de estudo.")
-                    break
+                    return nota
+                elif "desligar" in frase or "desliga" in frase:
+                    run_expression(standby)
+                    ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                    os.system("sudo shutdown -h now") 
                 else:
                     run_expression(thoughtful)
                     ttsCloud("Não entendi o que você disse. Me responda Sim ou Não para fazer atividade de avaliação.")
@@ -756,7 +799,7 @@ def conversation_mode():
     while continue_conversation:
         if GPIO.input(push_button_pin) == GPIO.LOW:
             frase = get_transcription_from_whisper("pt")
-            if "parar" in frase:
+            if "parar" in frase or "para" in frase:
                 run_expression(happy, standby)
                 ttsCloud("Certo, finalizando modo conversa.")
                 sleep(1)
@@ -795,10 +838,14 @@ def customlearning():
                             else:
                                 run_expression(happy,celebrating)
                                 ttsCloud("Você terminou o questionário. Parabéns")
-                                sleep(5)
-                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou em fazer um questionário customizado.")
+                                sleep(1)
+                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou fazer um questionário customizado.")
                                 run_expression(standby)
                                 break
+                        elif "desligar" in frase or "desliga" in frase:
+                            run_expression(standby)
+                            ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                            os.system("sudo shutdown -h now") 
                         else:
                             run_expression(sad)
                             ttsCloud("Está errado tente outra vez")
@@ -823,6 +870,10 @@ def customlearning():
                                                 run_expression(thoughtful)
                                                 ttsCloud(getQuestion(chapter,i))
                                                 break
+                                            if "desligar" in frase or "desliga" in frase:
+                                                run_expression(standby)
+                                                ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                                os.system("sudo shutdown -h now") 
                                             else:
                                                 run_expression(thoughtful)
                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
@@ -855,10 +906,14 @@ def customlearning():
                             else:
                                 run_expression(happy,celebrating)
                                 ttsCloud("Você terminou o questionário. Parabéns")
-                                sleep(5)
-                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou em fazer um questionário customizado.")
+                                sleep(1)
+                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou fazer um questionário customizado.")
                                 run_expression(standby)
                                 break
+                        elif "desligar" in frase or "desliga" in frase:
+                            run_expression(standby)
+                            ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                            os.system("sudo shutdown -h now") 
                         else:
                             run_expression(sad)
                             ttsCloud("Está errado tente outra vez")
@@ -881,8 +936,12 @@ def customlearning():
                                                 break
                                             if "não" in frase:
                                                 run_expression(thoughtful)
-                                                ttsCloud(getQuestion(chapter,i))
+                                                ttsCloud(getQuestion(chapter,j))
                                                 break
+                                            if "desligar" in frase or "desliga" in frase:
+                                                run_expression(standby)
+                                                ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                                os.system("sudo shutdown -h now") 
                                             else:
                                                 run_expression(thoughtful)
                                                 ttsCloud("Não entendi. Me responda se você quer pular a questão com Sim ou Não.")
@@ -1035,6 +1094,8 @@ if __name__ == '__main__':
     t.daemon = True
     t.start()
     ttsCloud("Olá, eu sou ÁLIX. O que vamos aprender hoje?")
+    run_expression(standby,thoughtful)
+    ttsCloud("Você pode escolher entre estudar, fazer uma pergunta ou fazer um questionário customizado.")
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
             frase = get_transcription_from_whisper("pt")
@@ -1061,6 +1122,10 @@ if __name__ == '__main__':
                                     ttsCloud("Ok. Compartimento de recompensas desativado.")
                                     lock_use = False
                                     break
+                                if "desligar" in frase or "desliga" in frase:
+                                    run_expression(standby)
+                                    ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                    os.system("sudo shutdown -h now")  
                                 else:
                                     run_expression(thoughtful)
                                     ttsCloud("Não entendi. Me responda se você quer usar o compartimento de recompensas com Sim ou Não.")
@@ -1081,6 +1146,10 @@ if __name__ == '__main__':
                                     ttsCloud("Ok. Detecção de presença desativado")
                                     presence_use = False
                                     break
+                                if "desligar" in frase or "desliga" in frase:
+                                    run_expression(standby)
+                                    ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
+                                    os.system("sudo shutdown -h now")  
                                 else:
                                     run_expression(thoughtful)
                                     ttsCloud("Não entendi. Me responda se você quer usar a detecção de presença com Sim ou Não.")
@@ -1093,15 +1162,15 @@ if __name__ == '__main__':
                     run_expression(thoughtful)
                     ttsCloud("Legal. O que você gostaria de perguntar?")
                     conversation_mode()
-                elif "customizadas" in frase or "customizada" in frase:
+                elif "customizadas" in frase or "customizado" in frase:
                     run_expression(happy)
                     ttsCloud("Vamos fazer as questões multidisciplinares.")
                     customlearning()
-                elif "parar" in frase:
+                elif "parar" in frase or "para" in frase:
                     run_expression(standby)
                     ttsCloud("Até logo, mal posso esperar para conversar com você de novo.")
                     break
-                elif "desligar" in frase:
+                elif "desligar" in frase or "desliga" in frase:
                     run_expression(standby)
                     ttsCloud("Até mais, mal posso esperar para conversar com você de novo.")
                     os.system("sudo shutdown -h now")  
