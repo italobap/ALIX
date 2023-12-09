@@ -92,6 +92,7 @@ link = "https://api.openai.com/v1/chat/completions"
 cred = credentials.Certificate(f"{address_default}Conversation/credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+codificacao = 'UTF-8'
 
 #-------------------------------APIs--------------------------------------
 # Whisper = speech to text
@@ -224,6 +225,30 @@ def generate_response(prompt):
     return mensagem
 
 #---------------------------Database Functions-----------------------------
+def customUpdate():
+    nameLesson = ''    
+    query = db.collection("CustomQuestionnaire").stream()
+    f = open('/home/alix/Documents/ALIX/ALIX/Conversation/Customs', 'w')
+    for custom in query:
+        nameLesson = str(custom.get('name')).lower()
+        #print(f"{lesson.id} => {lesson.to_dict()}")
+        print(f"{nameLesson}")
+        
+        with open('/home/alix/Documents/ALIX/ALIX/Conversation/Customs', 'a') as f:
+            f.write(f"{nameLesson}")
+            f.write('\n')
+        
+        f=open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{nameLesson}" ,'w', encoding=codificacao)
+        
+        customquestionnaire=custom.get("Questionnaire")
+        for question in customquestionnaire:
+            questionName = str(question.get('question')).lower()
+            expectedAnswer = str(question.get('answer')).lower()
+            print(f"{question.get('question')},{question.get('answer')}")
+            with open(f"/home/alix/Documents/ALIX/ALIX/Conversation/Questionnaires/{nameLesson}" ,'a', encoding=codificacao) as f:
+                f.write(f"{questionName},{expectedAnswer}")
+                f.write('\n')
+
 def getQuestion(lesson, i):
     f = open(f"{address_default}Conversation/Questionnaires/{lesson}", "r")
     content = f.readlines()
@@ -552,7 +577,7 @@ def assessment_mode(chapter):
                                                 break
                                             else:
                                                 run_expression(happy,celebrating)
-                                                ttsCloud("Você finalizou a atividade. Parabéns")
+                                                ttsCloud("Você terminou a atividade. Parabéns")
                                                 nota += 1
                                                 #nota
                                                 media = (nota/getRangeLesson(chapter)) * 10
@@ -647,7 +672,7 @@ def assessment_mode(chapter):
                                                 break
                                             else:
                                                 run_expression(happy,celebrating)
-                                                ttsCloud("Você finalizou a atividade. Parabéns")
+                                                ttsCloud("Você terminou a atividade. Parabéns")
                                                 nota += 1
                                                 #nota
                                                 media = (nota/getRangeLesson(chapter)) * 10
@@ -769,7 +794,10 @@ def customlearning():
                                 break
                             else:
                                 run_expression(happy,celebrating)
-                                ttsCloud("Você finalizou a atividade. Parabéns")
+                                ttsCloud("Você terminou o questionário. Parabéns")
+                                sleep(5)
+                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou em fazer um questionário customizado.")
+                                run_expression(standby)
                                 break
                         else:
                             run_expression(sad)
@@ -826,7 +854,10 @@ def customlearning():
                                 break
                             else:
                                 run_expression(happy,celebrating)
-                                ttsCloud("Você finalizou a atividade. Parabéns")
+                                ttsCloud("Você terminou o questionário. Parabéns")
+                                sleep(5)
+                                ttsCloud("Agora você pode escolher entre estudar, fazer uma pergunta ou em fazer um questionário customizado.")
+                                run_expression(standby)
                                 break
                         else:
                             run_expression(sad)
@@ -998,6 +1029,7 @@ def thread_expression():
 
 #----------------------------Main function----------------------------
 if __name__ == '__main__':
+    customUpdate()
     GPIO_Init()
     t = threading.Thread(target=thread_expression)
     t.daemon = True
@@ -1052,7 +1084,7 @@ if __name__ == '__main__':
                                 else:
                                     run_expression(thoughtful)
                                     ttsCloud("Não entendi. Me responda se você quer usar a detecção de presença com Sim ou Não.")
-                    run_expression(happy)
+                    #run_expression(happy)
                     ttsCloud("Vamos aprender inglês!!!")
                     #presence_use = False
                     #lock_use = False
@@ -1061,11 +1093,10 @@ if __name__ == '__main__':
                     run_expression(thoughtful)
                     ttsCloud("Legal. O que você gostaria de perguntar?")
                     conversation_mode()
-                elif "multidisciplinares" in frase or "multidisciplinar" in frase:
+                elif "customizadas" in frase or "customizada" in frase:
                     run_expression(happy)
                     ttsCloud("Vamos fazer as questões multidisciplinares.")
                     customlearning()
-                    ttsCloud("Finalizando as questões multidisciplinares.")
                 elif "parar" in frase:
                     run_expression(standby)
                     ttsCloud("Até logo, mal posso esperar para conversar com você de novo.")
