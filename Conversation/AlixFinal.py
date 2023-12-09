@@ -84,6 +84,7 @@ music_path = f"{address_default}alix songs/"
 # music_path = "C:/Users/italo/Documents/UTFPR/2023-2/Oficinas 3/Código/ALIX/alix songs/"
 
 # Whisper and GPT-3.5 Turbo keys and credentials
+
 headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 link = "https://api.openai.com/v1/chat/completions"
 
@@ -214,7 +215,7 @@ def ttsCloud(message):
 def generate_response(prompt):
     body_mensagem={
         "model": "gpt-3.5-turbo",
-        "messages": [{"role": "user", "content": prompt + "limite a resposta com 20 palavras e para uma pessoa de 8 a 10 anos."}]
+        "messages": [{"role": "user", "content": prompt + "limite a resposta com 20 palavras e para uma pessoa de 8 anos."}]
     }
     body_mensagem = json.dumps(body_mensagem)
     requisicao = requests.post(link, headers=headers, data= body_mensagem)
@@ -953,7 +954,7 @@ def lockable_compartment():
         print("Trava aberta")
 
     run_expression(standby)
-    ttsCloud("Compartimento de recompensas fechado com sucesso.")
+    #ttsCloud("Compartimento de recompensas fechado com sucesso.")
 
 def push_button_handler(sig):
     global push_button_is_pressed
@@ -1001,7 +1002,7 @@ if __name__ == '__main__':
     t = threading.Thread(target=thread_expression)
     t.daemon = True
     t.start()
-    ttsCloud("Olá, eu sou alix. O que vamos aprender hoje?")
+    ttsCloud("Olá, eu sou ÁLIX. O que vamos aprender hoje?")
     while True:
         if GPIO.input(push_button_pin) == GPIO.LOW:
             frase = get_transcription_from_whisper("pt")
@@ -1053,7 +1054,7 @@ if __name__ == '__main__':
                                     ttsCloud("Não entendi. Me responda se você quer usar a detecção de presença com Sim ou Não.")
                     run_expression(happy)
                     ttsCloud("Vamos aprender inglês!!!")
-                    #resence_use = False
+                    #presence_use = False
                     #lock_use = False
                     learning_mode(presence_use,lock_use)
                 elif "pergunta" in frase:
